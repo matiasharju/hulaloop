@@ -461,7 +461,7 @@
   let viewStart=0, viewEnd=0;
   let mainPeaks=null, ovPeaks=null;
   let dpr=Math.max(1,window.devicePixelRatio||1);
-  let node=null, gainNode=null, playMode=null, startCtxTime=0, startOffset=0, loopPeriodSec=0, raf=null;
+  let node=null, gainNode=null, playMode=null, startCtxTime=0, startOffset=0, loopPeriodSec=0, playStartSec=0, raf=null;
   let scrubSec=0, loopOffset=0, stopKeepsPosition=true;
   let chosen={source:"manual", value:120};
 
@@ -681,7 +681,7 @@
   }
 
   // ---- main pointer: edges / region slide / scrub ----
-  let drag=null, dragRefSec=0, dragS0=0, dragE0=0, downCssX=0, dragMoved=false;
+  let drag=null, dragRefSec=0, dragS0=0, dragE0=0, dragCue0=0, downCssX=0, dragMoved=false;
   function cssX(e){const r=canvas.getBoundingClientRect();return clampN((e.touches?e.touches[0].clientX:e.clientX)-r.left,0,r.width);}
   function nearEdgeCss(cx){
     const sX=secToXcss(startSec), eX=secToXcss(endSec), th=7;
@@ -696,14 +696,14 @@
   });
   canvas.addEventListener("pointerdown",e=>{
     e.preventDefault(); releaseFocus(); const cx=cssX(e); const t=nearEdgeCss(cx);
-    drag=t; downCssX=cx; dragMoved=false; dragRefSec=xToSecCss(cx); dragS0=startSec; dragE0=endSec;
+    drag=t; downCssX=cx; dragMoved=false; dragRefSec=xToSecCss(cx); dragS0=startSec; dragE0=endSec; dragCue0=startSec+loopOffset;
     if(t==="scrub"){scrubSec=xToSecCss(cx); if(!playMode)drawMain();}
     window.addEventListener("pointermove",onDrag); window.addEventListener("pointerup",endDrag);
   });
   function onDrag(e){
     if(!drag)return; const cx=cssX(e), s=xToSecCss(cx);
     if(Math.abs(cx-downCssX)>3) dragMoved=true;
-    if(drag==="start") setStart(s);
+    if(drag==="start") setStart(s,dragCue0);
     else if(drag==="end") setEnd(s);
     else if(drag==="region"){ if(dragMoved){const len=dragE0-dragS0; let ns=clampN(dragS0+(s-dragRefSec),0,dur-len); startSec=ns; endSec=ns+len;} }
     else if(drag==="scrub"){scrubSec=s;}
@@ -712,7 +712,7 @@
   function endDrag(){ const m=drag, moved=dragMoved; drag=null;
     window.removeEventListener("pointermove",onDrag); window.removeEventListener("pointerup",endDrag);
     if(m==="region"&&!moved){ seekTo(clampN(dragRefSec,startSec,endSec)); }     // a click inside the loop = move playhead there
-    else if(m==="start"||m==="end"||m==="region"){ restartLoopIfPlaying(); }
+    else if(m==="start"||m==="end"||m==="region"){ restartLoopIfPlaying(m==="start"&&!windowLocked()); }
   }
   function seekTo(sec){
     loopOffset=clampN(sec-startSec, 0, Math.max(0,(endSec-startSec)-0.001));
@@ -799,7 +799,11 @@
   const tiling=()=>lenLocked&&!!buffer&&lenFrames()>buffer.length;
   const keepLength=()=>xfadePreserve||windowLocked();   // a locked window stays exact only by borrowing audio after its end
   function moveWindow(s){ startSec=clampN(s,0,Math.max(0,dur-lenTarget)); endSec=Math.min(dur,startSec+lenTarget); }
-  function setStart(s){ if(windowLocked()) moveWindow(s); else startSec=clampN(s,0,endSec-0.005); }
+  function setStart(s,cue=startSec+loopOffset){
+    if(windowLocked()){ moveWindow(s); return; }
+    startSec=clampN(s,0,endSec-0.005);
+    loopOffset=clampN(cue-startSec,0,Math.max(0,endSec-startSec-0.001));
+  }
   function setEnd(e){ if(windowLocked()) moveWindow(e-lenTarget); else endSec=clampN(e,startSec+0.005,dur); }
   function parseLen(str){
     const p=str.trim().replace(",",".").split(":");
@@ -842,9 +846,9 @@
     const d=parseFloat(b.dataset.d);
     if(b.dataset.edge==="start") setStart(startSec+d);
     else setEnd(endSec+d);
-    refreshAll(); restartLoopIfPlaying();
+    refreshAll(); restartLoopIfPlaying(b.dataset.edge==="start"&&!windowLocked());
   }));
-  function setStartToPh(){ setStart(playMode?currentPlayheadSec():scrubSec); refreshAll(); restartLoopIfPlaying(); }
+  function setStartToPh(){ setStart(playMode?currentPlayheadSec():scrubSec); refreshAll(); restartLoopIfPlaying(!windowLocked()); }
   function setEndToPh(){ setEnd(playMode?currentPlayheadSec():scrubSec); refreshAll(); restartLoopIfPlaying(); }
   $("setStartPh").addEventListener("click",setStartToPh);
   $("setEndPh").addEventListener("click",setEndToPh);
@@ -1054,11 +1058,11 @@
     const {out,periodSec}=buildLoopBuffer(); loopPeriodSec=periodSec;
     let off=clampN(offsetSec||0,0,Math.max(0,periodSec-0.001));
     node=ctx.createBufferSource(); node.buffer=out; node.loop=true; node.loopStart=0; node.loopEnd=out.duration;
-    node.connect(makeGain()); playMode="loop"; startCtxTime=ctx.currentTime-off; node.start(0,off);
+    node.connect(makeGain()); playMode="loop"; playStartSec=startSec; startCtxTime=ctx.currentTime-off; node.start(0,off);
     afterPlay(t("status_looping", periodSec.toFixed(3), xfadeMs>0?xfadeMs:0));
   }
   function stopNodeOnly(){ if(node){try{node.stop();}catch(e){} node.disconnect(); node=null;} if(raf)cancelAnimationFrame(raf),raf=null; }
-  function restartLoopIfPlaying(){ if(playMode!=="loop")return; const cur=(ctx.currentTime-startCtxTime)%loopPeriodSec; startLoop(cur); }
+  function restartLoopIfPlaying(keepPlayhead){ if(playMode!=="loop")return; const cur=(ctx.currentTime-startCtxTime)%loopPeriodSec; startLoop(keepPlayhead?playStartSec+cur-startSec:cur); }
 
   $("stopBtn").addEventListener("click",stop);
   const stopModeBtn=$("stopMode");
@@ -1067,7 +1071,7 @@
   function afterPlay(label){ $("stopBtn").disabled=false; statusEl.innerHTML=`<span class="playing-dot"></span>${label}`; tick(); }
   function currentPlayheadSec(){
     if(playMode==="once")return clampN(startOffset+(ctx.currentTime-startCtxTime),0,endSec);
-    if(playMode==="loop"){const e=(ctx.currentTime-startCtxTime)%loopPeriodSec;return startSec+e;}
+    if(playMode==="loop"){const e=(ctx.currentTime-startCtxTime)%loopPeriodSec;return playStartSec+e;}
     return 0;
   }
   function tick(){ drawMain(); if(playMode)raf=requestAnimationFrame(tick); }
