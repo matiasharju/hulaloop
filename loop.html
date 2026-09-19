@@ -113,8 +113,8 @@
   .nudge{display:flex;gap:4px;margin-left:auto;align-items:center}
   .nudge .unit{font-family:var(--mono);font-size:10px;color:var(--muted-2);margin-right:2px;letter-spacing:.05em}
 
-  input[type=number]{font-family:var(--mono);font-size:13px;background:var(--input-bg);color:var(--text);border:1px solid var(--line);border-radius:var(--radius);padding:7px 9px;width:90px}
-  input[type=number]:focus{outline:none;border-color:var(--amber)}
+  input[type=number],input[type=text]{font-family:var(--mono);font-size:13px;background:var(--input-bg);color:var(--text);border:1px solid var(--line);border-radius:var(--radius);padding:7px 9px;width:90px}
+  input[type=number]:focus,input[type=text]:focus{outline:none;border-color:var(--amber)}
   input[type=range]{width:100%;accent-color:var(--teal)}
 
   .xfade-row{display:flex;align-items:center;gap:12px}
@@ -256,6 +256,14 @@
           <label data-i18n="lbl_length">Length</label>
           <span class="val" id="lenVal" style="color:var(--teal-text)">0.000<span class="u"> s</span></span>
         </div>
+        <div class="field">
+          <label data-i18n="lbl_target">Target</label>
+          <input type="text" id="lenTarget" inputmode="decimal" placeholder="m:ss" style="width:96px" />
+          <label style="width:auto;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="lenLock" style="accent-color:var(--amber)"> <span data-i18n="len_lock">Lock length</span>
+          </label>
+        </div>
+        <div class="sub" id="lenSub"></div>
         <div class="note" data-i18n-html="note_region">Drag the teal edges right on the waveform to set the loop; zoom in first for sample-level precision. The −/+ buttons nudge each edge in milliseconds and take effect live while a loop is playing. <b style="color:var(--text)">Spacebar</b> starts/stops the loop; <b style="color:var(--text)">T</b>/<b style="color:var(--text)">R</b> zoom in/out.</div>
 
       </div>
@@ -325,6 +333,10 @@
       zoom_out:"Zoom out (R / -)", zoom_in:"Zoom in (T / +)", fit_all:"Fit whole file", zoom_loop:"Zoom to loop",
       play_sel:"▶ Play selection", loop_sel:"↻ Loop selection", stop:"■ Stop",
       h_loop_region:"Loop region", lbl_start:"Start", lbl_end:"End", lbl_length:"Length",
+      lbl_target:"Target", len_lock:"Lock length",
+      len_fixed:len=>`Window locked to ${len}. Drag it along the file; the crossfade borrows audio after the window end, so the length stays exact.`,
+      len_xf_limited:ms=>`Only ${ms} ms of audio after the window: crossfade shortened. Move the window earlier for the full crossfade.`,
+      snap_locked:"Off while the length is locked.",
       set_start_ph:"Mark start (I/A)", set_end_ph:"Mark end (O/S)",
       note_region:'<b style="color:var(--text)">I</b>/<b style="color:var(--text)">O</b> or <b style="color:var(--text)">A</b>/<b style="color:var(--text)">S</b>: Snap the loop start/end to the playhead <br><b style="color:var(--text)">Spacebar</b>: Starts/stops the loop <br><b style="color:var(--text)">Return</b>: Jumps back to the loop start <br><b style="color:var(--text)">T</b>/<b style="color:var(--text)">R</b> or <b style="color:var(--text)">+</b>/<b style="color:var(--text)">-</b>: Zoom in/out',
       h_crossfade:"Crossfade", crossfade_hint:"smooths the seam",
@@ -374,6 +386,10 @@
       zoom_out:"Loitonna (R / -)", zoom_in:"Lähennä (T / +)", fit_all:"Näytä koko tiedosto", zoom_loop:"Zoomaa luuppiin",
       play_sel:"▶ Toista valinta", loop_sel:"↻ Luuppaa valinta", stop:"■ Pysäytä",
       h_loop_region:"Luuppialue", lbl_start:"Alku", lbl_end:"Loppu", lbl_length:"Pituus",
+      lbl_target:"Tavoite", len_lock:"Lukitse pituus",
+      len_fixed:len=>`Ikkuna lukittu pituuteen ${len}. Vedä sitä tiedostossa; ristihäivytys lainaa ääntä ikkunan lopun jälkeen, joten pituus pysyy tarkkana.`,
+      len_xf_limited:ms=>`Ikkunan lopun jälkeen on vain ${ms} ms ääntä: ristihäivytys lyhenee. Siirrä ikkunaa aiemmaksi täyttä ristihäivytystä varten.`,
+      snap_locked:"Pois käytöstä, kun pituus on lukittu.",
       set_start_ph:"Merkkaa alku (I/A)", set_end_ph:"Merkkaa loppu (O/S)",
       note_region:'<b style="color:var(--text)">I</b>/<b style="color:var(--text)">O</b> tai <b style="color:var(--text)">A</b>/<b style="color:var(--text)">S</b>: Asettaa luupin alun/lopun <br><b style="color:var(--text)">Välilyönti</b>: Käynnistää/pysäyttää luupin <br><b style="color:var(--text)">Return</b>: Palaa luupin alkuun <br><b style="color:var(--text)">T</b>/<b style="color:var(--text)">R</b> tai <b style="color:var(--text)">+</b>/<b style="color:var(--text)">-</b>: Lähentää/loitontaa',
       h_crossfade:"Ristihäivytys", crossfade_hint:"tasoittaa sauman",
@@ -435,7 +451,7 @@
   let ctx=null, buffer=null, dur=0;
   let srcBitDepth=null, srcFloat=false;
   let gainLin=1;                          // non-destructive normalize/gain multiplier
-  let startSec=0, endSec=0, xfadeMs=20, xfadePreserve=false;
+  let startSec=0, endSec=0, xfadeMs=20, xfadePreserve=false, lenTarget=0, lenLocked=false;
   let viewStart=0, viewEnd=0;
   let mainPeaks=null, ovPeaks=null;
   let dpr=Math.max(1,window.devicePixelRatio||1);
@@ -505,11 +521,12 @@
       }
       dur=buffer.duration;
       startSec=0; endSec=dur; viewStart=0; viewEnd=dur; loopOffset=0; scrubSec=0;
+      if(lenTarget){ setLenTarget(lenTarget); if(lenLocked) moveWindow(0); }
       gainLin=1; normLimited=false;
       mainPeaks=null; ovPeaks=null;
       work.classList.remove("nofile"); dropErr.classList.add("hidden"); $("exportResult").innerHTML="";
       $("fname").textContent=file.name;
-      setFmeta(); showNormResult();
+      setFmeta(); showNormResult(); updateXfModeBtn();
       sizeCanvases(); refreshAll();
     }catch(err){
       console.error(err);
@@ -669,7 +686,7 @@
   }
   canvas.addEventListener("pointermove",e=>{ if(drag)return;
     const t=nearEdgeCss(cssX(e));
-    canvas.style.cursor=(t==="start"||t==="end")?"ew-resize":(t==="region"?"grab":"text");
+    canvas.style.cursor=(t==="start"||t==="end")?(windowLocked()?"grab":"ew-resize"):(t==="region"?"grab":"text");
   });
   canvas.addEventListener("pointerdown",e=>{
     e.preventDefault(); releaseFocus(); const cx=cssX(e); const t=nearEdgeCss(cx);
@@ -680,8 +697,8 @@
   function onDrag(e){
     if(!drag)return; const cx=cssX(e), s=xToSecCss(cx);
     if(Math.abs(cx-downCssX)>3) dragMoved=true;
-    if(drag==="start") startSec=clampN(s,0,endSec-0.005);
-    else if(drag==="end") endSec=clampN(s,startSec+0.005,dur);
+    if(drag==="start") setStart(s);
+    else if(drag==="end") setEnd(s);
     else if(drag==="region"){ if(dragMoved){const len=dragE0-dragS0; let ns=clampN(dragS0+(s-dragRefSec),0,dur-len); startSec=ns; endSec=ns+len;} }
     else if(drag==="scrub"){scrubSec=s;}
     refreshAll(false);
@@ -769,15 +786,54 @@
     else if(e.key==="o"||e.key==="O"||e.key==="s"||e.key==="S"){e.preventDefault();setEndToPh();}
   });
 
+  // ---- fixed length ----
+  const lenTargetEl=$("lenTarget"), lenLockEl=$("lenLock"), lenSubEl=$("lenSub");
+  const windowLocked=()=>lenLocked&&!!buffer;
+  const keepLength=()=>xfadePreserve||windowLocked();   // a locked window stays exact only by borrowing audio after its end
+  const lenFrames=()=>Math.round(lenTarget*buffer.sampleRate);
+  function moveWindow(s){ startSec=clampN(s,0,dur-lenTarget); endSec=Math.min(dur,startSec+lenTarget); }
+  function setStart(s){ if(windowLocked()) moveWindow(s); else startSec=clampN(s,0,endSec-0.005); }
+  function setEnd(e){ if(windowLocked()) moveWindow(e-lenTarget); else endSec=clampN(e,startSec+0.005,dur); }
+  function parseLen(str){
+    const p=str.trim().replace(",",".").split(":");
+    if(p.length>3||p.some(x=>!/^(\d+\.?\d*|\.\d+)$/.test(x))) return 0;
+    return p.reduce((a,x)=>a*60+parseFloat(x),0);
+  }
+  function fmtLen(s){ const ms=Math.round(s*1000), m=Math.floor(ms/60000); return `${m}:${((ms-m*60000)/1000).toFixed(3).padStart(6,"0")}`; }
+  function setLenTarget(v){ lenTarget=clampN(v,0.01,dur); lenTargetEl.value=fmtLen(lenTarget); }
+  function applyLenLock(){
+    if(windowLocked()) moveWindow(startSec);
+    updateXfModeBtn(); refreshAll(); restartLoopIfPlaying();
+  }
+  lenTargetEl.addEventListener("change",()=>{
+    if(!buffer) return;
+    const v=parseLen(lenTargetEl.value);
+    if(v<=0){ lenTargetEl.value=lenTarget?fmtLen(lenTarget):""; return; }
+    setLenTarget(v); lenLocked=true; lenLockEl.checked=true; applyLenLock();
+  });
+  lenLockEl.addEventListener("change",()=>{
+    if(!buffer) return;
+    lenLocked=lenLockEl.checked;
+    if(lenLocked) setLenTarget(lenTarget||endSec-startSec);
+    applyLenLock();
+  });
+  function updateLenSub(){
+    if(!windowLocked()){ lenSubEl.textContent=""; return; }
+    const sr=buffer.sampleRate, [s0,s1]=regionFrames(), L=s1-s0, avail=buffer.length-s1;
+    let html=t("len_fixed",fmtLen(lenTarget));
+    if(xfadeFrames(L,sr,avail)<xfadeFrames(L,sr)) html+=`<br><span style="color:var(--amber-text)">${t("len_xf_limited",Math.round(avail/sr*1000))}</span>`;
+    lenSubEl.innerHTML=html;
+  }
+
   // ---- nudges / set ----
   document.querySelectorAll("[data-edge]").forEach(b=>b.addEventListener("click",()=>{
     const d=parseFloat(b.dataset.d);
-    if(b.dataset.edge==="start") startSec=clampN(startSec+d,0,endSec-0.005);
-    else endSec=clampN(endSec+d,startSec+0.005,dur);
+    if(b.dataset.edge==="start") setStart(startSec+d);
+    else setEnd(endSec+d);
     refreshAll(); restartLoopIfPlaying();
   }));
-  function setStartToPh(){ startSec=clampN(playMode?currentPlayheadSec():scrubSec,0,endSec-0.005); refreshAll(); restartLoopIfPlaying(); }
-  function setEndToPh(){ endSec=clampN(playMode?currentPlayheadSec():scrubSec,startSec+0.005,dur); refreshAll(); restartLoopIfPlaying(); }
+  function setStartToPh(){ setStart(playMode?currentPlayheadSec():scrubSec); refreshAll(); restartLoopIfPlaying(); }
+  function setEndToPh(){ setEnd(playMode?currentPlayheadSec():scrubSec); refreshAll(); restartLoopIfPlaying(); }
   $("setStartPh").addEventListener("click",setStartToPh);
   $("setEndPh").addEventListener("click",setEndToPh);
 
@@ -789,7 +845,7 @@
   xfadeNum.addEventListener("change",()=>{ xfadeNum.value=xfadeMs; });
   document.querySelectorAll("input[type=number]").forEach(el=>el.addEventListener("wheel",()=>el.blur(),{passive:true}));
   const xfModeBtn=$("xfMode");
-  function updateXfModeBtn(){ xfModeBtn.textContent=t(xfadePreserve?"xfmode_preserve":"xfmode_overlap"); xfModeBtn.style.color=xfadePreserve?"var(--teal-text)":"var(--amber-text)"; }
+  function updateXfModeBtn(){ const keep=keepLength(); xfModeBtn.textContent=t(keep?"xfmode_preserve":"xfmode_overlap"); xfModeBtn.style.color=keep?"var(--teal-text)":"var(--amber-text)"; xfModeBtn.disabled=windowLocked(); }
   xfModeBtn.addEventListener("click",()=>{ xfadePreserve=!xfadePreserve; updateXfModeBtn(); updateExportNote(); restartLoopIfPlaying(); });
 
   // ---- loudness (ITU-R BS.1770 integrated LUFS) + peak normalize ----
@@ -858,14 +914,20 @@
   $("normReset").addEventListener("click",()=>{ gainLin=1; normLimited=false; applyGain(); showNormResult(); });
 
   // ---- loop assembly + crossfade ----
+  function xfadeFrames(L,sr,avail=Infinity){ return Math.max(0,Math.min(Math.floor(xfadeMs/1000*sr),avail,Math.floor(L/2)-1)); }
+  function regionFrames(){
+    const sr=buffer.sampleRate;
+    if(windowLocked()){ const n=lenFrames(), s0=Math.min(Math.floor(startSec*sr),buffer.length-n); return [s0,s0+n]; }
+    return [Math.floor(startSec*sr),Math.floor(endSec*sr)];
+  }
   function regionRaw(){
-    const sr=buffer.sampleRate, s0=Math.floor(startSec*sr), s1=Math.floor(endSec*sr), ch=buffer.numberOfChannels, out=[];
+    const sr=buffer.sampleRate, [s0,s1]=regionFrames(), ch=buffer.numberOfChannels, out=[];
     for(let c=0;c<ch;c++) out.push(buffer.getChannelData(c).slice(s0,s1));
     return {chans:out, sr};
   }
   // OVERLAP: tail folds into head; period = L − C (loop gets shorter by the crossfade)
   function assembleOverlap(chans,sr){
-    const L=chans[0].length; let C=Math.floor((xfadeMs/1000)*sr); C=Math.min(C,Math.floor(L/2)-1); if(C<0)C=0;
+    const L=chans[0].length, C=xfadeFrames(L,sr);
     const P=L-C, ch=chans.length, out=ctx.createBuffer(ch,P,sr);
     for(let c=0;c<ch;c++){const src=chans[c], dst=out.getChannelData(c);
       for(let i=0;i<P;i++){const base=src[i]||0;
@@ -875,9 +937,9 @@
   }
   // PRESERVE: blend the head with audio just AFTER the loop end; period stays exactly L
   function preserveRegion(){
-    const sr=buffer.sampleRate, s0=Math.floor(startSec*sr), s1=Math.floor(endSec*sr), L=s1-s0, ch=buffer.numberOfChannels;
+    const sr=buffer.sampleRate, [s0,s1]=regionFrames(), L=s1-s0, ch=buffer.numberOfChannels;
     const avail=buffer.length-s1;                       // post-roll samples available after the loop end
-    let C=Math.floor((xfadeMs/1000)*sr); C=Math.min(C,avail,Math.floor(L/2)-1); if(C<0)C=0;
+    const C=xfadeFrames(L,sr,avail);
     const out=[];
     for(let c=0;c<ch;c++){const src=buffer.getChannelData(c), dst=new Float32Array(L);
       for(let i=0;i<L;i++){const base=src[s0+i]||0;
@@ -893,7 +955,7 @@
   }
   function makeLoop(alpha){                              // alpha=1 → no stretch
     const stretch=Math.abs(alpha-1)>1e-4;
-    if(xfadePreserve){
+    if(keepLength()){
       let {chans,sr}=preserveRegion();                  // already seamless, length L
       if(stretch) chans=chans.map(c=>wsolaLoop(c,alpha));
       return bufferFrom(chans,sr);
@@ -906,7 +968,7 @@
   function buildLoopBuffer(){ return makeLoop(1); }
   function buildExportBuffer(){
     let alpha=1;
-    if(snapOn()&&snapTargetVal()>0&&getManualBpm()>0) alpha=getManualBpm()/snapTargetVal();
+    if(snapActive()) alpha=getManualBpm()/snapTargetVal();
     return makeLoop(alpha);
   }
   // stretch a LOOP without leaving a silent tail: pad with the loop's own head,
@@ -1019,9 +1081,12 @@
   const snapOnEl=$("snapOn"), snapTargetEl=$("snapTarget"), snapSub=$("snapSub");
   const snapOn=()=>snapOnEl.checked;
   const snapTargetVal=()=>parseFloat(snapTargetEl.value)||0;
+  const snapActive=()=>snapOn()&&snapTargetVal()>0&&getManualBpm()>0&&!lenLocked;
   snapOnEl.addEventListener("change",()=>{ if(snapOn()&&!snapTargetEl.value) snapTargetEl.value=Math.round(getManualBpm())||120; updateSnapSub(); updateExportNote(); });
   snapTargetEl.addEventListener("input",()=>{updateSnapSub();updateExportNote();});
   function updateSnapSub(){
+    snapOnEl.disabled=snapTargetEl.disabled=lenLocked;
+    if(lenLocked){ snapSub.textContent=t("snap_locked"); return; }
     if(!snapOn()){ snapSub.textContent=t("snap_off"); return; }
     const cur=getManualBpm();
     if(cur<=0){ snapSub.innerHTML=t("snap_need_beats"); return; }
@@ -1035,7 +1100,7 @@
   function bpmTagged(){ return $("bpmTag").checked; }
   function exportName(){
     const base=($("fname").textContent.replace(/\.[^.]+$/,"")||"sample").replace(/\s+/g,"_");
-    const v=(snapOn()&&snapTargetVal()>0&&getManualBpm()>0)?snapTargetVal():chosen.value;
+    const v=snapActive()?snapTargetVal():chosen.value;
     return `${base}${(bpmTagged()&&v>0)?`_${fmtBpmName(v)}bpm`:""}_loop.wav`;
   }
   let lastUrl=null, exportedTimer=null;
@@ -1080,7 +1145,7 @@
   $("exportBtn").addEventListener("click",()=>{ if(!buffer)return;
     const {out}=buildExportBuffer();
     const tagged=bpmTagged();
-    const bpmMeta=tagged?((snapOn()&&snapTargetVal()>0&&getManualBpm()>0)?snapTargetVal():chosen.value):0;
+    const bpmMeta=tagged?(snapActive()?snapTargetVal():chosen.value):0;
     const beatsMeta=parseFloat(beatsInput.value)||0;
     const f=exportFormat();
     triggerDownload(new Blob([encodeWAV(out,{bpm:bpmMeta,beats:beatsMeta},f.bits,f.float,gainLin)],{type:"audio/wav"}), exportName());
@@ -1088,11 +1153,11 @@
   function updateExportNote(){
     if(!buffer){exportNote.textContent="";return;}
     let len=endSec-startSec, bpmLabel=chosen.value, stretched=false;
-    if(snapOn()&&snapTargetVal()>0&&getManualBpm()>0){ len=len*getManualBpm()/snapTargetVal(); bpmLabel=snapTargetVal(); stretched=true; }
+    if(snapActive()){ len=len*getManualBpm()/snapTargetVal(); bpmLabel=snapTargetVal(); stretched=true; }
     const sr=buffer.sampleRate;
     let period;
-    if(xfadePreserve){ period=len; }
-    else { let C=Math.floor((xfadeMs/1000)*sr); C=Math.min(C,Math.floor((len*sr)/2)-1); if(C<0)C=0; period=len-C/sr; }
+    if(keepLength()){ period=len; }
+    else period=len-xfadeFrames(len*sr,sr)/sr;
     const bpmOut=stretched?bpmLabel:chosen.value;
     const tag=(bpmTagged()&&bpmOut>0)?t("embedded",fmtBpmName(bpmOut)):"";
     exportNote.innerHTML=t("export_note", exportName(), period.toFixed(3), stretched, fmtBpmName(bpmLabel), tag);
@@ -1147,7 +1212,7 @@
     $("endVal").innerHTML=endSec.toFixed(3)+'<span class="u"> s</span>';
     $("lenVal").innerHTML=(endSec-startSec).toFixed(3)+'<span class="u"> s</span>';
     viewLabel.textContent=`view ${fmtTime(viewStart)}–${fmtTime(viewEnd)}  (${(viewLen()).toFixed(2)}s)`;
-    buildRuler(); updateManual(); updateExportNote(); updateSnapSub();
+    buildRuler(); updateManual(); updateExportNote(); updateSnapSub(); updateLenSub();
     if(redraw||!playMode){drawMain();} drawOverview();
   }
   function buildRuler(){ ruler.innerHTML=""; const steps=6;
