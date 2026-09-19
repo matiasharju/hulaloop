@@ -259,38 +259,41 @@
       <div class="card panel tempo">
         <h3 data-i18n="h_tempo">Tempo</h3>
 
-        <div class="readout chosen" id="manualCard">
-          <div class="lbl"><span data-i18n="lbl_manual">Manual — beats ÷ length</span> <span class="chosen-tag" data-i18n="export_tag">EXPORT ✓</span></div>
-          <div class="beats-input">
-            <label data-i18n="beats_in_loop">Beats in this loop</label>
-            <input type="number" id="beats" min="0" step="1" value="4" />
-          </div>
-          <div class="bignum amber" id="manualBpm">120.0<span class="u">BPM</span></div>
-          <div class="formula" id="manualFormula"></div>
-          <div class="row-actions"><button class="tiny" data-choose="manual" data-i18n="use_for_export">Use this for export</button></div>
-        </div>
-
-        <div class="readout" id="tapCard">
-          <div class="lbl"><span data-i18n="lbl_tap">Tap tempo</span> <span class="chosen-tag" data-i18n="export_tag">EXPORT ✓</span></div>
-          <div class="tap">
-            <button class="tiny" id="tapBtn" data-i18n="tap_on_beat">Tap on the beat</button>
-            <span class="sub" id="tapOut" style="margin-top:0" data-i18n="tap_prompt">tap a few times…</span>
-            <button class="tiny" data-choose="tap" style="margin-left:auto" data-i18n="use_this">Use this</button>
-          </div>
-        </div>
-
-        <div class="readout" id="snapCard">
-          <div class="lbl" data-i18n="lbl_snap">Snap tempo · time-stretch</div>
-          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);cursor:pointer">
-            <input type="checkbox" id="snapOn" style="accent-color:var(--amber)"> <span data-i18n="stretch_to">Stretch loop to exactly</span>
-            <input type="number" id="snapTarget" min="1" step="0.5" placeholder="120" style="width:78px"> <span style="color:var(--muted);font-size:12px">BPM</span>
-          </label>
-          <div class="sub" id="snapSub"></div>
-        </div>
-
         <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);cursor:pointer;margin-bottom:12px">
-          <input type="checkbox" id="bpmTag" checked style="accent-color:var(--amber)"> <span data-i18n="tag_label">Tag as loop — embed tempo, add BPM to filename</span>
+          <input type="checkbox" id="bpmTag" style="accent-color:var(--amber)"> <span data-i18n="tag_label">Embed tempo (BPM) in metadata</span>
         </label>
+
+        <div id="tempoDetails" class="hidden">
+          <div class="readout chosen" id="manualCard">
+            <div class="lbl"><span data-i18n="lbl_manual">Manual — beats ÷ length</span> <span class="chosen-tag" data-i18n="export_tag">EXPORT ✓</span></div>
+            <div class="beats-input">
+              <label data-i18n="beats_in_loop">Beats in this loop</label>
+              <input type="number" id="beats" min="0" step="1" value="4" />
+            </div>
+            <div class="bignum amber" id="manualBpm">120.0<span class="u">BPM</span></div>
+            <div class="formula" id="manualFormula"></div>
+            <div class="row-actions"><button class="tiny" data-choose="manual" data-i18n="use_for_export">Use this for export</button></div>
+          </div>
+
+          <div class="readout" id="tapCard">
+            <div class="lbl"><span data-i18n="lbl_tap">Tap tempo</span> <span class="chosen-tag" data-i18n="export_tag">EXPORT ✓</span></div>
+            <div class="tap">
+              <button class="tiny" id="tapBtn" data-i18n="tap_on_beat">Tap on the beat</button>
+              <span class="sub" id="tapOut" style="margin-top:0" data-i18n="tap_prompt">tap a few times…</span>
+              <button class="tiny" data-choose="tap" style="margin-left:auto" data-i18n="use_this">Use this</button>
+            </div>
+          </div>
+
+          <div class="readout" id="snapCard">
+            <div class="lbl" data-i18n="lbl_snap">Snap tempo · time-stretch</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);cursor:pointer">
+              <input type="checkbox" id="snapOn" style="accent-color:var(--amber)"> <span data-i18n="stretch_to">Stretch loop to exactly</span>
+              <input type="number" id="snapTarget" min="1" step="0.5" placeholder="120" style="width:78px"> <span style="color:var(--muted);font-size:12px">BPM</span>
+            </label>
+            <div class="sub" id="snapSub"></div>
+          </div>
+        </div>
+
         <div class="export-row">
           <button class="primary" id="exportBtn" data-i18n="export_btn">⤓ Export loop (WAV)</button>
         </div>
@@ -1094,7 +1097,7 @@
   const snapOnEl=$("snapOn"), snapTargetEl=$("snapTarget"), snapSub=$("snapSub");
   const snapOn=()=>snapOnEl.checked;
   const snapTargetVal=()=>parseFloat(snapTargetEl.value)||0;
-  const snapActive=()=>snapOn()&&snapTargetVal()>0&&getManualBpm()>0&&!lenLocked;
+  const snapActive=()=>bpmTagged()&&snapOn()&&snapTargetVal()>0&&getManualBpm()>0&&!lenLocked;
   snapOnEl.addEventListener("change",()=>{ if(snapOn()&&!snapTargetEl.value) snapTargetEl.value=Math.round(getManualBpm())||120; updateSnapSub(); updateExportNote(); });
   snapTargetEl.addEventListener("input",()=>{updateSnapSub();updateExportNote();});
   function updateSnapSub(){
@@ -1257,7 +1260,9 @@
   updateXfModeBtn();
   updateNormMode();
   applyTheme(theme);
-  $("bpmTag").addEventListener("change",updateExportNote);
+  function updateTempoVisibility(){ $("tempoDetails").classList.toggle("hidden",!bpmTagged()); updateExportNote(); }
+  $("bpmTag").addEventListener("change",updateTempoVisibility);
+  updateTempoVisibility();
 })();
 </script>
 </body>
