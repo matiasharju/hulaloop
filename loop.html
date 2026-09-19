@@ -75,7 +75,6 @@
 
   .card{background:linear-gradient(180deg,var(--panel) 0%,var(--panel-b) 100%);border:1px solid var(--line-soft);border-radius:10px;overflow:hidden}
 
-  /* overview + main waveform */
   #overview{display:block;width:100%;height:46px;cursor:pointer;touch-action:none;border-bottom:1px solid var(--line-soft)}
   #wavecanvas{display:block;width:100%;height:200px;touch-action:none}
 
@@ -432,10 +431,10 @@
 
   // ---- state ----
   let ctx=null, buffer=null, dur=0;
-  let srcBitDepth=null, srcFloat=false;   // original WAV depth, when known
+  let srcBitDepth=null, srcFloat=false;
   let gainLin=1;                          // non-destructive normalize/gain multiplier
   let startSec=0, endSec=0, xfadeMs=20, xfadePreserve=false;
-  let viewStart=0, viewEnd=0;               // zoom window
+  let viewStart=0, viewEnd=0;
   let mainPeaks=null, ovPeaks=null;
   let dpr=Math.max(1,window.devicePixelRatio||1);
   let node=null, gainNode=null, playMode=null, startCtxTime=0, startOffset=0, loopPeriodSec=0, raf=null;
@@ -475,7 +474,6 @@
   ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
   // (file loading on drop is handled by the #work drop listener below, which also covers the empty state)
 
-  // drag a new file onto the main view to replace the current one
   const dropover=$("dropover"); let dragDepth=0;
   const hasFiles=e=>e.dataTransfer && Array.from(e.dataTransfer.types||[]).includes("Files");
   work.addEventListener("dragenter",e=>{ if(!hasFiles(e)||work.classList.contains("nofile"))return; e.preventDefault(); dragDepth++; dropover.classList.add("show"); });
@@ -516,7 +514,6 @@
       dropErr.textContent=t("decode_err");
     }
   }
-  // Parse PCM/float WAV directly so we keep the original sample rate & bit depth.
   function parseWav(ab){
     const v=new DataView(ab);
     if(v.byteLength<44) return null;
@@ -632,7 +629,7 @@
     if(x<-4||x>canvas.width+4)return;
     cc.strokeStyle=color; cc.lineWidth=Math.max(1,dpr*1.3);
     cc.beginPath(); cc.moveTo(x,0); cc.lineTo(x,canvas.height); cc.stroke();
-    const t=6*dpr; // small grab tab at top
+    const t=6*dpr;
     cc.fillStyle=color; cc.beginPath();
     cc.moveTo(x-t,0); cc.lineTo(x+t,0); cc.lineTo(x,t*1.6); cc.closePath(); cc.fill();
   }
@@ -690,7 +687,6 @@
     if(m==="region"&&!moved){ seekTo(clampN(dragRefSec,startSec,endSec)); }     // a click inside the loop = move playhead there
     else if(m==="start"||m==="end"||m==="region"){ restartLoopIfPlaying(); }
   }
-  // move the playhead/cue to a point inside the loop; if looping, jump there now
   function seekTo(sec){
     loopOffset=clampN(sec-startSec, 0, Math.max(0,(endSec-startSec)-0.001));
     scrubSec=startSec+loopOffset;
@@ -755,7 +751,7 @@
       if(buffer){ playMode?stop():startLoop(loopOffset); }
       return;
     }
-    if(e.key==="Enter"){                                     // Return → back to loop start (DAW-style)
+    if(e.key==="Enter"){
       e.preventDefault();
       if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
       if(buffer) seekTo(startSec);
@@ -843,11 +839,11 @@
       if(!isFinite(L)){ gainLin=1; normLimited=false; applyGain(); normResultEl.textContent=t("norm_silent"); return; }
       g=Math.pow(10,(target-L)/20);
       normLimited=false;
-      if(pk*g>ceilingLin){ g=ceilingLin/pk; normLimited=true; }   // limit to avoid clipping
+      if(pk*g>ceilingLin){ g=ceilingLin/pk; normLimited=true; }
     } else {
-      g=Math.pow(10,target/20)/pk; normLimited=false;             // peak → exact target dBFS
+      g=Math.pow(10,target/20)/pk; normLimited=false;
     }
-    g=Math.min(g, Math.pow(10,40/20));                            // cap at +40 dB
+    g=Math.min(g, Math.pow(10,40/20));
     gainLin=g; applyGain(); showNormResult();
   }
   normModeBtn.addEventListener("click",()=>{ normMode=normMode==="lufs"?"peak":"lufs"; if(normMode==="peak"&&+normTargetEl.value<-40)normTargetEl.value=-1; if(normMode==="peak"&&+normTargetEl.value>0)normTargetEl.value=-1; updateNormMode(); });
@@ -944,7 +940,7 @@
 
   // ---- playback ----
   function stop(){
-    if(playMode && stopKeepsPosition){                       // leave the cue where playback stopped
+    if(playMode && stopKeepsPosition){
       loopOffset=clampN(currentPlayheadSec()-startSec, 0, Math.max(0,(endSec-startSec)-0.001));
       scrubSec=startSec+loopOffset;
     }
@@ -1063,7 +1059,6 @@
     setTimeout(()=>a.remove(),0);
     const res=$("exportResult"); res.innerHTML=""; if(exportedTimer)clearTimeout(exportedTimer);
     if(embedded){
-      // sandboxed preview blocks auto-download — offer a real save link
       const link=document.createElement("a");
       link.href=url; link.download=filename; link.textContent=t("save_link",filename);
       link.style.cssText="color:var(--amber);font-family:var(--mono);font-size:12px;text-decoration:none;border:1px solid var(--amber);border-radius:6px;padding:7px 11px;display:inline-block";
@@ -1089,14 +1084,14 @@
     if(snapOn()&&snapTargetVal()>0&&getManualBpm()>0){ len=len*getManualBpm()/snapTargetVal(); bpmLabel=snapTargetVal(); stretched=true; }
     const sr=buffer.sampleRate;
     let period;
-    if(xfadePreserve){ period=len; }                    // preserve keeps the full length
+    if(xfadePreserve){ period=len; }
     else { let C=Math.floor((xfadeMs/1000)*sr); C=Math.min(C,Math.floor((len*sr)/2)-1); if(C<0)C=0; period=len-C/sr; }
     const bpmOut=stretched?bpmLabel:chosen.value;
     const tag=(bpmTagged()&&bpmOut>0)?t("embedded",fmtBpmName(bpmOut)):"";
     exportNote.innerHTML=t("export_note", exportName(), period.toFixed(3), stretched, fmtBpmName(bpmLabel), tag);
   }
 
-  function exportFormat(){                          // match the source where we know it
+  function exportFormat(){
     if(srcFloat) return {bits:32,float:true};
     if(srcBitDepth===24) return {bits:24,float:false};
     if(srcBitDepth===32) return {bits:32,float:true};
@@ -1160,7 +1155,6 @@
     $("fmeta").textContent=`${fmtTime(dur)} · ${buffer.sampleRate.toLocaleString()} Hz · ${chLabel}${depth}`;
   }
 
-  // initial render in default language (Finnish)
   applyStatic();
   updateStopModeBtn();
   updateXfModeBtn();
