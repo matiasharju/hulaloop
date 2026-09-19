@@ -83,6 +83,10 @@
 
   .zoombar{display:flex;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
   .zoombar .view{font-family:var(--mono);font-size:11px;color:var(--muted-2);margin-left:auto}
+  .btngroup{gap:8px}
+  .touch-only{display:none}
+  html.touch .touch-only{display:inline-flex}
+  html.touch .zoombar button{padding:9px 12px;font-size:12px}
   .ruler{display:flex;justify-content:space-between;padding:6px 12px;font-family:var(--mono);font-size:10.5px;color:var(--muted-2)}
 
   .transport{display:flex;gap:8px;align-items:center;padding:12px;border-top:1px solid var(--line-soft);flex-wrap:wrap}
@@ -187,8 +191,14 @@
       <canvas id="wavecanvas"></canvas>
 
       <div class="zoombar">
-        <button class="tiny" id="zoomOut" data-i18n="zoom_out">– zoom (R)</button>
-        <button class="tiny" id="zoomIn" data-i18n="zoom_in">+ zoom (T)</button>
+        <span class="btngroup touch-only">
+          <button class="tiny" id="zoomOut" data-i18n="zoom_out">Zoom out</button>
+          <button class="tiny" id="zoomIn" data-i18n="zoom_in">Zoom in</button>
+        </span>
+        <span class="btngroup touch-only">
+          <button class="tiny" id="markIn" data-i18n="mark_in">Mark IN</button>
+          <button class="tiny" id="markOut" data-i18n="mark_out">Mark OUT</button>
+        </span>
         <button class="tiny" id="fitBtn" data-i18n="fit_all">Fit all</button>
         <button class="tiny loop" id="zoomLoop" data-i18n="zoom_loop">Zoom to loop</button>
         <span class="view" id="viewLabel"></span>
@@ -330,7 +340,7 @@
       load_another:"Load another file",
       theme_toggle:"Light / dark theme",
       drop_replace:"Drop a new file to replace",
-      zoom_out:"Zoom out (R / -)", zoom_in:"Zoom in (T / +)", fit_all:"Fit whole file", zoom_loop:"Zoom to loop",
+      zoom_out:"Zoom out", zoom_in:"Zoom in", mark_in:"Mark IN", mark_out:"Mark OUT", fit_all:"Fit whole file", zoom_loop:"Zoom to loop",
       play_sel:"▶ Play selection", loop_sel:"↻ Loop selection", stop:"■ Stop",
       h_loop_region:"Loop region", lbl_start:"Start", lbl_end:"End", lbl_length:"Length",
       lbl_target:"Target", len_lock:"Lock length",
@@ -386,7 +396,7 @@
       load_another:"Lataa uusi tiedosto",
       theme_toggle:"Vaalea / tumma teema",
       drop_replace:"Pudota uusi tiedosto korvataksesi",
-      zoom_out:"Loitonna (R / -)", zoom_in:"Lähennä (T / +)", fit_all:"Näytä koko tiedosto", zoom_loop:"Zoomaa luuppiin",
+      zoom_out:"Loitonna", zoom_in:"Lähennä", mark_in:"Merkkaa alku", mark_out:"Merkkaa loppu", fit_all:"Näytä koko tiedosto", zoom_loop:"Zoomaa luuppiin",
       play_sel:"▶ Toista valinta", loop_sel:"↻ Luuppaa valinta", stop:"■ Pysäytä",
       h_loop_region:"Luuppialue", lbl_start:"Alku", lbl_end:"Loppu", lbl_length:"Pituus",
       lbl_target:"Tavoite", len_lock:"Lukitse pituus",
@@ -485,6 +495,10 @@
     applyTheme(theme==="light"?"dark":"light");
     try{ localStorage.setItem("hulaThemeChoice", theme); }catch(e){}
   });
+
+  const anyCoarse=matchMedia("(any-pointer: coarse)"), anyFine=matchMedia("(any-pointer: fine)");
+  const updateTouch=()=>document.documentElement.classList.toggle("touch",anyCoarse.matches&&!anyFine.matches);
+  anyCoarse.addEventListener("change",updateTouch); anyFine.addEventListener("change",updateTouch); updateTouch();
 
   const canvas=$("wavecanvas"), cc=canvas.getContext("2d");
   const ov=$("overview"), oc=ov.getContext("2d");
@@ -852,6 +866,8 @@
   function setEndToPh(){ setEnd(playMode?currentPlayheadSec():scrubSec); refreshAll(); restartLoopIfPlaying(); }
   $("setStartPh").addEventListener("click",setStartToPh);
   $("setEndPh").addEventListener("click",setEndToPh);
+  $("markIn").addEventListener("click",setStartToPh);
+  $("markOut").addEventListener("click",setEndToPh);
 
   // ---- crossfade ----
   function setXfade(v){ v=Math.max(0,Math.min(2000,Math.round(v||0))); xfadeMs=v; xfadeEl.value=v; xfadeNum.value=v; updateExportNote(); restartLoopIfPlaying(); }
