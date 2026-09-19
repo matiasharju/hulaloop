@@ -210,7 +210,7 @@
 
         <h3><span data-i18n="h_crossfade">Crossfade</span> <span style="margin-left:auto;font-weight:500;letter-spacing:0;text-transform:none;color:var(--muted-2);font-size:10px" data-i18n="crossfade_hint">smooths the seam</span></h3>
         <div class="xfade-row">
-          <input type="range" id="xfade" min="0" max="2000" step="5" value="20" />
+          <input type="range" id="xfade" min="0" max="2000" step="1" value="20" />
           <input type="number" id="xfadeNum" min="0" max="2000" step="5" value="20" style="width:66px" />
           <span class="val" style="min-width:20px">ms</span>
         </div>
@@ -311,6 +311,7 @@
 (() => {
   "use strict";
   const $ = id => document.getElementById(id);
+  const releaseFocus = () => { const a=document.activeElement; if(a&&a.blur) a.blur(); };
 
   // ---- i18n ----
   let LANG="en";
@@ -671,7 +672,7 @@
     canvas.style.cursor=(t==="start"||t==="end")?"ew-resize":(t==="region"?"grab":"text");
   });
   canvas.addEventListener("pointerdown",e=>{
-    e.preventDefault(); const cx=cssX(e); const t=nearEdgeCss(cx);
+    e.preventDefault(); releaseFocus(); const cx=cssX(e); const t=nearEdgeCss(cx);
     drag=t; downCssX=cx; dragMoved=false; dragRefSec=xToSecCss(cx); dragS0=startSec; dragE0=endSec;
     if(t==="scrub"){scrubSec=xToSecCss(cx); if(!playMode)drawMain();}
     window.addEventListener("pointermove",onDrag); window.addEventListener("pointerup",endDrag);
@@ -711,7 +712,7 @@
     const m=ovMode(ovCssX(e));
     ov.style.cursor=(m==="left"||m==="right")?"ew-resize":(m==="pan"?"grab":"pointer");
   });
-  ov.addEventListener("pointerdown",e=>{ e.preventDefault();
+  ov.addEventListener("pointerdown",e=>{ e.preventDefault(); releaseFocus();
     const cx=ovCssX(e), m=ovMode(cx), sec=ovSecAt(cx), minLen=Math.min(dur,0.01), len0=viewEnd-viewStart;
     if(m==="jump"){ let vs=clampN(sec-len0/2,0,dur-len0); viewStart=vs; viewEnd=vs+len0; ovDrag="pan"; ovGrab=sec-viewStart; }
     else if(m==="pan"){ ovDrag="pan"; ovGrab=sec-viewStart; }
@@ -750,13 +751,13 @@
     if(tag==="INPUT"||tag==="TEXTAREA")return;
     if(e.code==="Space"||e.key===" "){
       e.preventDefault();                                   // never scroll the page
-      if(document.activeElement&&document.activeElement.blur)document.activeElement.blur(); // avoid re-firing a focused button
+      releaseFocus(); // avoid re-firing a focused button
       if(buffer){ playMode?stop():startLoop(loopOffset); }
       return;
     }
     if(e.key==="Enter"){
       e.preventDefault();
-      if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+      releaseFocus();
       if(buffer) seekTo(startSec);
       return;
     }
@@ -783,7 +784,10 @@
   // ---- crossfade ----
   function setXfade(v){ v=Math.max(0,Math.min(2000,Math.round(v||0))); xfadeMs=v; xfadeEl.value=v; xfadeNum.value=v; updateExportNote(); restartLoopIfPlaying(); }
   xfadeEl.addEventListener("input",()=>setXfade(+xfadeEl.value));
-  xfadeNum.addEventListener("input",()=>setXfade(+xfadeNum.value));
+  xfadeEl.addEventListener("pointerup",releaseFocus);
+  xfadeNum.addEventListener("input",()=>{ if(xfadeNum.value!=="") setXfade(+xfadeNum.value); });
+  xfadeNum.addEventListener("change",()=>{ xfadeNum.value=xfadeMs; });
+  document.querySelectorAll("input[type=number]").forEach(el=>el.addEventListener("wheel",()=>el.blur(),{passive:true}));
   const xfModeBtn=$("xfMode");
   function updateXfModeBtn(){ xfModeBtn.textContent=t(xfadePreserve?"xfmode_preserve":"xfmode_overlap"); xfModeBtn.style.color=xfadePreserve?"var(--teal-text)":"var(--amber-text)"; }
   xfModeBtn.addEventListener("click",()=>{ xfadePreserve=!xfadePreserve; updateXfModeBtn(); updateExportNote(); restartLoopIfPlaying(); });
