@@ -257,7 +257,7 @@
       </div>
 
       <div class="card panel tempo">
-        <h3 data-i18n="h_tempo">Tempo</h3>
+        <h3 data-i18n="h_export">Export</h3>
 
         <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);cursor:pointer;margin-bottom:12px">
           <input type="checkbox" id="bpmTag" style="accent-color:var(--amber)"> <span data-i18n="tag_label">Embed tempo (BPM) in metadata</span>
@@ -343,7 +343,7 @@
       norm_silent:"Selection is silent — nothing to normalise.",
       norm_applied:(meas,gdb,pk)=>`Measured ${meas} → gain ${gdb>=0?"+":""}${gdb.toFixed(1)} dB · peak ${pk} dBFS`,
       tag_label:"Embed tempo (BPM) in metadata",
-      h_tempo:"Tempo", lbl_manual:"Manual — beats ÷ length", export_tag:"EXPORT ✓",
+      h_export:"Export", lbl_manual:"Manual — beats ÷ length", export_tag:"EXPORT ✓",
       beats_in_loop:"Beats in this loop", use_for_export:"Use this",
       lbl_tap:"Tap tempo", tap_on_beat:"Tap on the beat", tap_prompt:"tap a few times…", use_this:"Use this",
       lbl_snap:"Snap tempo · time-stretch", stretch_to:"Stretch loop to exactly", export_btn:"⤓ Export loop (WAV)",
@@ -399,7 +399,7 @@
       norm_silent:"Valinta on hiljainen — ei normalisoitavaa.",
       norm_applied:(meas,gdb,pk)=>`Mitattu ${meas} → vahvistus ${gdb.toFixed(1)} dB · huippu ${pk} dBFS`,
       tag_label:"Upota tempo (BPM) metadataan",
-      h_tempo:"Tempo", lbl_manual:"Manuaalinen — iskut ÷ pituus", export_tag:"VIENTI ✓",
+      h_export:"Vienti", lbl_manual:"Manuaalinen — iskut ÷ pituus", export_tag:"VIENTI ✓",
       beats_in_loop:"Iskuja luupissa", use_for_export:"Käytä tätä",
       lbl_tap:"Tap-tempo", tap_on_beat:"Naputa tahtiin", tap_prompt:"naputa muutaman kerran…", use_this:"Käytä tätä",
       lbl_snap:"Tempon pakotus · aikavenytys", stretch_to:"Venytä luuppi tasan", export_btn:"⤓ Vie luuppi (WAV)",
