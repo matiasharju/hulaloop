@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -446,19 +446,21 @@
     dark:{ waveBg:"#100e09", ovBg:"#0e0c08", center:"#23201a", barOut:"#5c5546", barIn:"#46d6b4", clip:"#ff5d5d", edge:"#46d6b4", playhead:"#ffb02e", cue:"rgba(255,176,46,.85)", scrub:"rgba(236,231,218,.45)", regionTint:"rgba(70,214,180,0.08)", ovBar:"#4a4538", ovRegion:"rgba(70,214,180,0.22)", ovView:"rgba(255,176,46,0.10)", ovViewBorder:"#ffb02e" },
     light:{ waveBg:"#f4edde", ovBg:"#efe7d8", center:"#e0d8c7", barOut:"#c9bfa6", barIn:"#0e9b7b", clip:"#cf4045", edge:"#0e9b7b", playhead:"#dd8b12", cue:"rgba(221,139,18,.9)", scrub:"rgba(133,124,108,.5)", regionTint:"rgba(14,155,123,0.10)", ovBar:"#cdc3aa", ovRegion:"rgba(14,155,123,0.18)", ovView:"rgba(221,139,18,0.12)", ovViewBorder:"#dd8b12" }
   };
-  let PAL=CANVAS_THEMES.dark;
+  let PAL=CANVAS_THEMES.light;
   const themeBtn=$("themeToggle");
-  let theme="dark";
-  try{ const s=localStorage.getItem("hulaTheme"); if(s==="light"||s==="dark") theme=s; }catch(e){}
+  let theme="light";
+  try{ const s=localStorage.getItem("hulaThemeChoice"); if(s==="light"||s==="dark") theme=s; }catch(e){}
   function applyTheme(m){
     theme=m;
     document.documentElement.classList.toggle("light", m==="light");
     PAL=CANVAS_THEMES[m]||CANVAS_THEMES.dark;
     themeBtn.textContent = (m==="dark") ? "☀" : "☾";   // shows the theme you'd switch to
     if(buffer){ drawMain(); drawOverview(); }
-    try{ localStorage.setItem("hulaTheme", m); }catch(e){}
   }
-  themeBtn.addEventListener("click",()=>applyTheme(theme==="light"?"dark":"light"));
+  themeBtn.addEventListener("click",()=>{
+    applyTheme(theme==="light"?"dark":"light");
+    try{ localStorage.setItem("hulaThemeChoice", theme); }catch(e){}
+  });
 
   const canvas=$("wavecanvas"), cc=canvas.getContext("2d");
   const ov=$("overview"), oc=ov.getContext("2d");
