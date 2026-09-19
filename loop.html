@@ -337,6 +337,9 @@
       len_fixed:len=>`Window locked to ${len}. Drag it along the file; the crossfade borrows audio after the window end, so the length stays exact.`,
       len_xf_limited:ms=>`Only ${ms} ms of audio after the window: crossfade shortened. Move the window earlier for the full crossfade.`,
       snap_locked:"Off while the length is locked.",
+      len_tiled:(loop,n,len)=>`Longer than the file: the marked loop (${loop}) is repeated ×${n} on export to fill ${len}, joined by the same crossfade seam.`,
+      export_fail:"Export failed: the loop is probably too long for the memory available.",
+      export_wav_limit:hours=>`Too long for a WAV file (4 GB limit). The longest possible with this file's format is ${hours} hours.`,
       set_start_ph:"Mark start (I/A)", set_end_ph:"Mark end (O/S)",
       note_region:'<b style="color:var(--text)">I</b>/<b style="color:var(--text)">O</b> or <b style="color:var(--text)">A</b>/<b style="color:var(--text)">S</b>: Snap the loop start/end to the playhead <br><b style="color:var(--text)">Spacebar</b>: Starts/stops the loop <br><b style="color:var(--text)">Return</b>: Jumps back to the loop start <br><b style="color:var(--text)">T</b>/<b style="color:var(--text)">R</b> or <b style="color:var(--text)">+</b>/<b style="color:var(--text)">-</b>: Zoom in/out',
       h_crossfade:"Crossfade", crossfade_hint:"smooths the seam",
@@ -390,6 +393,9 @@
       len_fixed:len=>`Ikkuna lukittu pituuteen ${len}. Vedä sitä tiedostossa; ristihäivytys lainaa ääntä ikkunan lopun jälkeen, joten pituus pysyy tarkkana.`,
       len_xf_limited:ms=>`Ikkunan lopun jälkeen on vain ${ms} ms ääntä: ristihäivytys lyhenee. Siirrä ikkunaa aiemmaksi täyttä ristihäivytystä varten.`,
       snap_locked:"Pois käytöstä, kun pituus on lukittu.",
+      len_tiled:(loop,n,len)=>`Pidempi kuin tiedosto: merkattua luuppia (${loop}) toistetaan viennissä ×${n}, jotta ${len} täyttyy; saumoissa käytetään samaa ristihäivytystä.`,
+      export_fail:"Vienti epäonnistui: luuppi on todennäköisesti liian pitkä käytettävissä olevalle muistille.",
+      export_wav_limit:hours=>`Liian pitkä WAV-tiedostoksi (4 Gt:n raja). Pisin mahdollinen tämän tiedoston formaatilla on ${hours} tuntia.`,
       set_start_ph:"Merkkaa alku (I/A)", set_end_ph:"Merkkaa loppu (O/S)",
       note_region:'<b style="color:var(--text)">I</b>/<b style="color:var(--text)">O</b> tai <b style="color:var(--text)">A</b>/<b style="color:var(--text)">S</b>: Asettaa luupin alun/lopun <br><b style="color:var(--text)">Välilyönti</b>: Käynnistää/pysäyttää luupin <br><b style="color:var(--text)">Return</b>: Palaa luupin alkuun <br><b style="color:var(--text)">T</b>/<b style="color:var(--text)">R</b> tai <b style="color:var(--text)">+</b>/<b style="color:var(--text)">-</b>: Lähentää/loitontaa',
       h_crossfade:"Ristihäivytys", crossfade_hint:"tasoittaa sauman",
@@ -521,7 +527,7 @@
       }
       dur=buffer.duration;
       startSec=0; endSec=dur; viewStart=0; viewEnd=dur; loopOffset=0; scrubSec=0;
-      if(lenTarget){ setLenTarget(lenTarget); if(lenLocked) moveWindow(0); }
+      if(windowLocked()) moveWindow(0);
       gainLin=1; normLimited=false;
       mainPeaks=null; ovPeaks=null;
       work.classList.remove("nofile"); dropErr.classList.add("hidden"); $("exportResult").innerHTML="";
@@ -788,10 +794,11 @@
 
   // ---- fixed length ----
   const lenTargetEl=$("lenTarget"), lenLockEl=$("lenLock"), lenSubEl=$("lenSub");
-  const windowLocked=()=>lenLocked&&!!buffer;
-  const keepLength=()=>xfadePreserve||windowLocked();   // a locked window stays exact only by borrowing audio after its end
   const lenFrames=()=>Math.round(lenTarget*buffer.sampleRate);
-  function moveWindow(s){ startSec=clampN(s,0,dur-lenTarget); endSec=Math.min(dur,startSec+lenTarget); }
+  const windowLocked=()=>lenLocked&&!!buffer&&lenFrames()<=buffer.length;
+  const tiling=()=>lenLocked&&!!buffer&&lenFrames()>buffer.length;
+  const keepLength=()=>xfadePreserve||windowLocked();   // a locked window stays exact only by borrowing audio after its end
+  function moveWindow(s){ startSec=clampN(s,0,Math.max(0,dur-lenTarget)); endSec=Math.min(dur,startSec+lenTarget); }
   function setStart(s){ if(windowLocked()) moveWindow(s); else startSec=clampN(s,0,endSec-0.005); }
   function setEnd(e){ if(windowLocked()) moveWindow(e-lenTarget); else endSec=clampN(e,startSec+0.005,dur); }
   function parseLen(str){
@@ -800,7 +807,7 @@
     return p.reduce((a,x)=>a*60+parseFloat(x),0);
   }
   function fmtLen(s){ const ms=Math.round(s*1000), m=Math.floor(ms/60000); return `${m}:${((ms-m*60000)/1000).toFixed(3).padStart(6,"0")}`; }
-  function setLenTarget(v){ lenTarget=clampN(v,0.01,dur); lenTargetEl.value=fmtLen(lenTarget); }
+  function setLenTarget(v){ lenTarget=Math.max(v,0.01); lenTargetEl.value=fmtLen(lenTarget); }
   function applyLenLock(){
     if(windowLocked()) moveWindow(startSec);
     updateXfModeBtn(); refreshAll(); restartLoopIfPlaying();
@@ -818,6 +825,11 @@
     applyLenLock();
   });
   function updateLenSub(){
+    if(tiling()){
+      const sr=buffer.sampleRate, [s0,s1]=regionFrames(), L=s1-s0, P=keepLength()?L:L-xfadeFrames(L,sr);
+      lenSubEl.textContent=t("len_tiled",fmtLen(P/sr),(lenFrames()/P).toFixed(2),fmtLen(lenTarget));
+      return;
+    }
     if(!windowLocked()){ lenSubEl.textContent=""; return; }
     const sr=buffer.sampleRate, [s0,s1]=regionFrames(), L=s1-s0, avail=buffer.length-s1;
     let html=t("len_fixed",fmtLen(lenTarget));
@@ -969,7 +981,18 @@
   function buildExportBuffer(){
     let alpha=1;
     if(snapActive()) alpha=getManualBpm()/snapTargetVal();
-    return makeLoop(alpha);
+    const loop=makeLoop(alpha);
+    return tiling()?tileToLength(loop.out,lenFrames()):loop;
+  }
+  // repeat the seamless loop cycle to exactly N frames; the wrap seam blends the end into the start with the same crossfade
+  function tileToLength(cycle,N){
+    const sr=cycle.sampleRate, ch=cycle.numberOfChannels, P=cycle.length, out=ctx.createBuffer(ch,N,sr);
+    const C=N%P===0?0:xfadeFrames(N,sr);
+    for(let c=0;c<ch;c++){const src=cycle.getChannelData(c), dst=out.getChannelData(c);
+      for(let i=0;i<N;i++){const base=src[i%P];
+        if(i<C){const w=i/C; dst[i]=base*Math.sin(w*Math.PI/2)+src[(N+i)%P]*Math.cos(w*Math.PI/2);}
+        else dst[i]=base;}}
+    return {out,periodSec:N/sr};
   }
   // stretch a LOOP without leaving a silent tail: pad with the loop's own head,
   // stretch, then crop to the exact target length (the kept part is fully filled).
@@ -1143,12 +1166,24 @@
     }
   }
   $("exportBtn").addEventListener("click",()=>{ if(!buffer)return;
-    const {out}=buildExportBuffer();
-    const tagged=bpmTagged();
-    const bpmMeta=tagged?(snapActive()?snapTargetVal():chosen.value):0;
-    const beatsMeta=parseFloat(beatsInput.value)||0;
-    const f=exportFormat();
-    triggerDownload(new Blob([encodeWAV(out,{bpm:bpmMeta,beats:beatsMeta},f.bits,f.float,gainLin)],{type:"audio/wav"}), exportName());
+    const f=exportFormat(), maxBytes=0xFFFFFFFF-68, frameBytes=buffer.numberOfChannels*f.bits/8;
+    if(tiling()&&lenFrames()*frameBytes>maxBytes){
+      $("exportResult").innerHTML=`<div class="err">${t("export_wav_limit",(maxBytes/frameBytes/buffer.sampleRate/3600).toFixed(1))}</div>`;
+      return;
+    }
+    let wav;
+    try{
+      const {out}=buildExportBuffer();
+      const tagged=bpmTagged();
+      const bpmMeta=tagged?(snapActive()?snapTargetVal():chosen.value):0;
+      const beatsMeta=(parseFloat(beatsInput.value)||0)*(tiling()?lenTarget/(endSec-startSec):1);
+      wav=encodeWAV(out,{bpm:bpmMeta,beats:beatsMeta},f.bits,f.float,gainLin);
+    }catch(err){
+      console.error(err);
+      $("exportResult").innerHTML=`<div class="err">${t("export_fail")}</div>`;
+      return;
+    }
+    triggerDownload(new Blob([wav],{type:"audio/wav"}), exportName());
   });
   function updateExportNote(){
     if(!buffer){exportNote.textContent="";return;}
