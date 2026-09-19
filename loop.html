@@ -654,7 +654,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
       len_tiled:(loop,n,len)=>`Longer than the file: the marked loop (${loop}) is repeated ×${n} on export to fill ${len}, joined by the same crossfade seam.`,
       export_fail:"Export failed: the loop is probably too long for the memory available.",
       lbl_format:"Format",
-      mp3_note:"MP3 is lossy and not gapless: most players will click or gap at the loop point, so WAV is the better choice for seamless loops.",
+      mp3_note:"MP3 is lossy. The file carries a gapless header, so players that support gapless playback will loop it cleanly; others will click or gap at the loop point, and WAV is the safest choice for seamless loops.",
       mp3_resample:(from,to)=>`This file is ${from} kHz; MP3 export resamples it to ${to} kHz.`,
       mp3_progress:pct=>`Encoding MP3… ${pct} %`,
       export_mp3_channels:"MP3 supports only mono or stereo. Export this file as WAV.",
@@ -715,7 +715,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
       len_tiled:(loop,n,len)=>`Pidempi kuin tiedosto: merkattua luuppia (${loop}) toistetaan viennissä ×${n}, jotta ${len} täyttyy; saumoissa käytetään samaa ristihäivytystä.`,
       export_fail:"Vienti epäonnistui: luuppi on todennäköisesti liian pitkä käytettävissä olevalle muistille.",
       lbl_format:"Formaatti",
-      mp3_note:"MP3 on häviöllinen eikä saumaton: useimmat soittimet naksahtavat tai jättävät aukon luuppipisteessä, joten WAV sopii saumattomiin luuppeihin paremmin.",
+      mp3_note:"MP3 on häviöllinen. Tiedostossa on saumattoman toiston otsake, joten sitä tukevat soittimet luuppaavat sen puhtaasti; muut naksahtavat tai jättävät aukon luuppipisteessä, ja WAV on turvallisin valinta saumattomiin luuppeihin.",
       mp3_resample:(from,to)=>`Tiedosto on ${from} kHz; MP3-vienti muuntaa sen ${to} kHz:iin.`,
       mp3_progress:pct=>`Koodataan MP3:a… ${pct} %`,
       export_mp3_channels:"MP3 tukee vain monoa tai stereoa. Vie tämä tiedosto WAV-muodossa.",
@@ -1520,6 +1520,32 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
     for(let i=0;i<text.length;i++) tag[21+i]=text.charCodeAt(i);
     return tag;
   }
+  const crcTable=(()=>{ const tb=new Uint16Array(256); for(let i=0;i<256;i++){ let c=i; for(let k=0;k<8;k++) c=(c&1)?(c>>1)^0xA001:c>>1; tb[i]=c; } return tb; })();
+  const crc16=(b,end,crc=0)=>{ for(let i=0;i<end;i++) crc=(crc>>8)^crcTable[(crc^b[i])&0xFF]; return crc; };
+  const LAME_DELAY=576;
+  // first, silent frame in the standard Xing/LAME layout: players that read it trim the encoder delay and padding, so the loop keeps its exact length
+  function lameInfoFrame(hdr,ch,sr,frames,bytes,padding,musicCrc){
+    const f=new Uint8Array(Math.floor(144*MP3_KBPS*1000/sr)), dv=new DataView(f.buffer), o=ch===1?21:36, l=o+120;
+    f.set(hdr.subarray(0,4)); f[2]&=~0x02;
+    f.set([0x49,0x6E,0x66,0x6F],o);
+    dv.setUint32(o+4,0x0F); dv.setUint32(o+8,frames); dv.setUint32(o+12,bytes);
+    for(let i=0;i<100;i++) f[o+16+i]=Math.round(i*2.55);
+    f.set([...`LAME3.98r`].map(c=>c.charCodeAt(0)),l);
+    f[l+9]=1; f[l+10]=205; f[l+20]=255;
+    f[l+21]=LAME_DELAY>>4; f[l+22]=((LAME_DELAY&15)<<4)|(padding>>8); f[l+23]=padding&255;
+    dv.setUint32(l+28,bytes); dv.setUint16(l+32,musicCrc);
+    dv.setUint16(l+34,crc16(f,l+34));
+    return f;
+  }
+  function addGaplessHeader(parts,ch,sr,samples){
+    const view=c=>new Uint8Array(c.buffer,c.byteOffset,c.length), frameLen=Math.floor(144*MP3_KBPS*1000/sr);
+    let frames=0, audioBytes=0, crc=0;
+    for(const c of parts){
+      const b=view(c); audioBytes+=b.length; crc=crc16(b,b.length,crc);
+      for(let p=0;p+4<=b.length;p+=frameLen+((b[p+2]>>1)&1)) frames++;
+    }
+    parts.unshift(lameInfoFrame(view(parts[0]),ch,sr,frames,frameLen+audioBytes,frames*1152-LAME_DELAY-samples,crc));
+  }
   // windowed-sinc resampler that wraps around the ends, so a loop's seam survives the rate change
   async function resampleLoop(chans,srIn,srOut,onProgress){
     const ratio=srOut/srIn, sc=Math.min(1,ratio)*0.97, W=Math.ceil(12/sc), PH=2048, T=2*W, tbl=new Float32Array(PH*T);
@@ -1557,7 +1583,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
       if(performance.now()-t0>30){ onProgress(share+(1-share)*j/N); await yieldToUI(); t0=performance.now(); }
     }
     const tail=enc.flush(); if(tail.length) parts.push(tail);
-    return parts;
+    return {parts,ch,sr,samples:N};
   }
   async function exportMp3(){
     const res=$("exportResult");
@@ -1568,7 +1594,8 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
     try{
       progress(0); await yieldToUI();
       const {out}=buildExportBuffer(), bpm=exportBpm();
-      parts=await encodeMp3(out,progress);
+      const enc=await encodeMp3(out,progress);
+      parts=enc.parts; addGaplessHeader(parts,enc.ch,enc.sr,enc.samples);
       if(bpm>0) parts.unshift(id3Tag(bpm));
     }catch(err){
       console.error(err);
