@@ -19,15 +19,15 @@
     --sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
   }
   :root.light{
-    --bg:#f5efe3; --panel:#fffdf8; --panel-2:#efe7d8; --panel-b:#f3ecdd;
-    --line:#e4ddcc; --line-soft:#ece3d2;
-    --text:#2c281f; --muted:#857c6c; --muted-2:#a89e89;
-    --amber:#dd8b12; --teal:#0e9b7b; --teal-soft:#c4e6da; --red:#cf4045;
-    --bg-hi:#fffaf0; --on-amber:#3a2705; --amber-hi:#eca01f;
-    --drop-over-bg:#e6f1ec; --over-bg:rgba(245,239,227,.86);
-    --btn-hover-bg:#efe7d8; --btn-hover-border:#d8cdb6;
-    --teal-border:#7fcdb6; --on-teal:#0a4a3b; --teal-hover:#aedfd0;
-    --input-bg:#fbf6ec;
+    --bg:#eceef1; --panel:#ffffff; --panel-2:#e6e9ed; --panel-b:#f6f7f9;
+    --line:#d5d9df; --line-soft:#e1e4e9;
+    --text:#1f242b; --muted:#5f6772; --muted-2:#8a919b;
+    --amber:#cf7d0c; --teal:#0d8a70; --teal-soft:#d4e9e3; --red:#c93a40;
+    --bg-hi:#f7f8fa; --on-amber:#2a1c04; --amber-hi:#e0921f;
+    --drop-over-bg:#e3eeea; --over-bg:rgba(236,238,241,.86);
+    --btn-hover-bg:#dbdfe5; --btn-hover-border:#c2c8d0;
+    --teal-border:#93c9bb; --on-teal:#0a4a3b; --teal-hover:#bfded5;
+    --input-bg:#f3f4f6;
   }
   *{box-sizing:border-box}
   html,body{margin:0}
@@ -444,7 +444,7 @@
   // canvas colours per theme (the waveform is drawn in JS, so it can't read CSS vars directly)
   const CANVAS_THEMES={
     dark:{ waveBg:"#100e09", ovBg:"#0e0c08", center:"#23201a", barOut:"#5c5546", barIn:"#46d6b4", clip:"#ff5d5d", edge:"#46d6b4", playhead:"#ffb02e", cue:"rgba(255,176,46,.85)", scrub:"rgba(236,231,218,.45)", regionTint:"rgba(70,214,180,0.08)", ovBar:"#4a4538", ovRegion:"rgba(70,214,180,0.22)", ovView:"rgba(255,176,46,0.10)", ovViewBorder:"#ffb02e" },
-    light:{ waveBg:"#f4edde", ovBg:"#efe7d8", center:"#e0d8c7", barOut:"#c9bfa6", barIn:"#0e9b7b", clip:"#cf4045", edge:"#0e9b7b", playhead:"#dd8b12", cue:"rgba(221,139,18,.9)", scrub:"rgba(133,124,108,.5)", regionTint:"rgba(14,155,123,0.10)", ovBar:"#cdc3aa", ovRegion:"rgba(14,155,123,0.18)", ovView:"rgba(221,139,18,0.12)", ovViewBorder:"#dd8b12" }
+    light:{ waveBg:"#f4f6f8", ovBg:"#e8ebef", center:"#d3d8de", barOut:"#b3bac5", barIn:"#0d8a70", clip:"#c93a40", edge:"#0d8a70", playhead:"#cf7d0c", cue:"rgba(207,125,12,.9)", scrub:"rgba(95,103,114,.5)", regionTint:"rgba(13,138,112,0.10)", ovBar:"#b8bfc9", ovRegion:"rgba(13,138,112,0.18)", ovView:"rgba(207,125,12,0.12)", ovViewBorder:"#cf7d0c" }
   };
   let PAL=CANVAS_THEMES.light;
   const themeBtn=$("themeToggle");
