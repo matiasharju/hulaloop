@@ -9,6 +9,7 @@
     --bg:#141310; --panel:#1d1b15; --panel-2:#26231b; --panel-b:#191711;
     --line:#37322a; --line-soft:#2b271f;
     --text:#ece7da; --muted:#988f7c; --muted-2:#6f6757;
+    --amber-text:var(--amber); --teal-text:var(--teal);
     --amber:#ffb02e; --teal:#46d6b4; --teal-soft:#1d4a42; --red:#ff6b6b;
     --bg-hi:#211e17; --on-amber:#231a06; --amber-hi:#ffbe54;
     --drop-over-bg:#1c211c; --over-bg:rgba(16,14,9,.82);
@@ -22,7 +23,8 @@
   :root.light{
     --bg:#eceef1; --panel:#ffffff; --panel-2:#e6e9ed; --panel-b:#f6f7f9;
     --line:#d5d9df; --line-soft:#e1e4e9;
-    --text:#1f242b; --muted:#5f6772; --muted-2:#8a919b;
+    --text:#14181d; --muted:#444b56; --muted-2:#586170;
+    --amber-text:#9a5700; --teal-text:#087159;
     --amber:#cf7d0c; --teal:#0d8a70; --teal-soft:#d4e9e3; --red:#c93a40;
     --bg-hi:#f7f8fa; --on-amber:#2a1c04; --amber-hi:#e0921f;
     --drop-over-bg:#e3eeea; --over-bg:rgba(236,238,241,.86);
@@ -68,7 +70,7 @@
   #work.nofile .panel{opacity:.34;pointer-events:none;filter:saturate(.45)}
   .dropover{position:absolute;inset:-6px;z-index:60;display:none;align-items:center;justify-content:center;background:var(--over-bg);border:2px dashed var(--amber);border-radius:var(--radius);pointer-events:none;backdrop-filter:blur(1px)}
   .dropover.show{display:flex}
-  .dropover span{font-family:var(--mono);color:var(--amber);font-size:14px;letter-spacing:.03em}
+  .dropover span{font-family:var(--mono);color:var(--amber-text);font-size:14px;letter-spacing:.03em}
   .filebar{display:flex;align-items:center;gap:12px;margin-bottom:14px;font-family:var(--mono);font-size:12px;color:var(--muted)}
   .filebar .name{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
   .filebar .meta{color:var(--muted-2)}
@@ -116,21 +118,21 @@
   input[type=range]{width:100%;accent-color:var(--teal)}
 
   .xfade-row{display:flex;align-items:center;gap:12px}
-  .xfade-row .val{font-family:var(--mono);font-size:13px;color:var(--teal);min-width:60px;text-align:right}
+  .xfade-row .val{font-family:var(--mono);font-size:13px;color:var(--teal-text);min-width:60px;text-align:right}
   .note{font-size:11.5px;color:var(--muted-2);line-height:1.55;margin-top:10px}
 
   .readout{background:var(--input-bg);border:1px solid var(--line-soft);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;position:relative}
   .readout.chosen{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset}
   .readout .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);margin-bottom:6px;display:flex;align-items:center;gap:8px}
-  .chosen-tag{display:none;font-size:9.5px;color:var(--amber);border:1px solid var(--amber);border-radius:var(--radius);padding:1px 7px;letter-spacing:.1em}
+  .chosen-tag{display:none;font-size:9.5px;color:var(--amber-text);border:1px solid var(--amber);border-radius:var(--radius);padding:1px 7px;letter-spacing:.1em}
   .readout.chosen .chosen-tag{display:inline-block}
   .bignum{font-family:var(--mono);font-weight:700;line-height:1}
-  .bignum.amber{color:var(--amber);font-size:38px}
-  .bignum.teal{color:var(--teal);font-size:38px}
+  .bignum.amber{color:var(--amber-text);font-size:38px}
+  .bignum.teal{color:var(--teal-text);font-size:38px}
   .bignum .u{font-size:14px;color:var(--muted);font-weight:500;margin-left:6px}
   .sub{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.6}
   .sub .alt{color:var(--text);cursor:pointer;border-bottom:1px dashed var(--muted-2)}
-  .sub .alt:hover{color:var(--amber);border-color:var(--amber)}
+  .sub .alt:hover{color:var(--amber-text);border-color:var(--amber)}
   .row-actions{margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 
   .beats-input{display:flex;align-items:center;gap:10px;margin-bottom:6px}
@@ -252,7 +254,7 @@
         </div>
         <div class="field">
           <label data-i18n="lbl_length">Length</label>
-          <span class="val" id="lenVal" style="color:var(--teal)">0.000<span class="u"> s</span></span>
+          <span class="val" id="lenVal" style="color:var(--teal-text)">0.000<span class="u"> s</span></span>
         </div>
         <div class="note" data-i18n-html="note_region">Drag the teal edges right on the waveform to set the loop; zoom in first for sample-level precision. The −/+ buttons nudge each edge in milliseconds and take effect live while a loop is playing. <b style="color:var(--text)">Spacebar</b> starts/stops the loop; <b style="color:var(--text)">T</b>/<b style="color:var(--text)">R</b> zoom in/out.</div>
 
@@ -357,7 +359,7 @@
       snap_info:(cur,tt,len,nlen,dir,a)=>`${cur} → ${tt} BPM · ${len}s → ${nlen}s · ${dir} ×${a}, pitch preserved (applied on export).`,
       slower:"slower", faster:"faster",
       embedded:bpm=>` Tempo (${bpm} BPM) embedded in metadata.`,
-      export_note:(name,period,stretched,sbpm,tag)=>`Saving to <b style="color:var(--text)">Downloads</b> folder as <span style="font-family:var(--mono);color:var(--teal)">${name}</span>.${tag}`,
+      export_note:(name,period,stretched,sbpm,tag)=>`Saving to <b style="color:var(--text)">Downloads</b> folder as <span style="font-family:var(--mono);color:var(--teal-text)">${name}</span>.${tag}`,
       save_link:name=>"⤓ Save "+name,
       export_done:name=>`✓ Saved ${name}`,
       dl_hint:"If the file didn't appear in <b style='color:var(--text)'>Downloads</b>, click the link above. Still nothing? The embedded preview is blocking saves — open Hula Loop in its own browser tab (or download this .html and open it locally) and export will work normally."
@@ -406,7 +408,7 @@
       snap_info:(cur,tt,len,nlen,dir,a)=>`${cur} → ${tt} BPM · ${len}s → ${nlen}s · ${dir} ×${a}, sävelkorkeus säilyy (käytetään viennissä).`,
       slower:"hitaampi", faster:"nopeampi",
       embedded:bpm=>` Tempo (${bpm} BPM) upotettu metadataan.`,
-      export_note:(name,period,stretched,sbpm,tag)=>`Tallennetaan <b style="color:var(--text)">Lataukset</b>-kansioon nimellä <span style="font-family:var(--mono);color:var(--teal)">${name}</span>.${tag}`,
+      export_note:(name,period,stretched,sbpm,tag)=>`Tallennetaan <b style="color:var(--text)">Lataukset</b>-kansioon nimellä <span style="font-family:var(--mono);color:var(--teal-text)">${name}</span>.${tag}`,
       save_link:name=>"⤓ Tallenna "+name,
       export_done:name=>`✓ Tallennettu ${name}`,
       dl_hint:"Jos tiedosto ei ilmestynyt <b style='color:var(--text)'>Lataukset</b>-kansioon, napsauta yllä olevaa linkkiä. Eikö vieläkään? Upotettu esikatselu estää tallennukset — avaa Hula Loop omaan selainvälilehteen (tai lataa tämä .html ja avaa paikallisesti), niin vienti toimii normaalisti."
@@ -783,7 +785,7 @@
   xfadeEl.addEventListener("input",()=>setXfade(+xfadeEl.value));
   xfadeNum.addEventListener("input",()=>setXfade(+xfadeNum.value));
   const xfModeBtn=$("xfMode");
-  function updateXfModeBtn(){ xfModeBtn.textContent=t(xfadePreserve?"xfmode_preserve":"xfmode_overlap"); xfModeBtn.style.color=xfadePreserve?"var(--teal)":"var(--amber)"; }
+  function updateXfModeBtn(){ xfModeBtn.textContent=t(xfadePreserve?"xfmode_preserve":"xfmode_overlap"); xfModeBtn.style.color=xfadePreserve?"var(--teal-text)":"var(--amber-text)"; }
   xfModeBtn.addEventListener("click",()=>{ xfadePreserve=!xfadePreserve; updateXfModeBtn(); updateExportNote(); restartLoopIfPlaying(); });
 
   // ---- loudness (ITU-R BS.1770 integrated LUFS) + peak normalize ----
@@ -971,7 +973,7 @@
 
   $("stopBtn").addEventListener("click",stop);
   const stopModeBtn=$("stopMode");
-  function updateStopModeBtn(){ stopModeBtn.textContent=t(stopKeepsPosition?"stopmode_keep":"stopmode_return"); stopModeBtn.style.color=stopKeepsPosition?"var(--teal)":"var(--amber)"; }
+  function updateStopModeBtn(){ stopModeBtn.textContent=t(stopKeepsPosition?"stopmode_keep":"stopmode_return"); stopModeBtn.style.color=stopKeepsPosition?"var(--teal-text)":"var(--amber-text)"; }
   stopModeBtn.addEventListener("click",()=>{ stopKeepsPosition=!stopKeepsPosition; updateStopModeBtn(); });
   function afterPlay(label){ $("stopBtn").disabled=false; statusEl.innerHTML=`<span class="playing-dot"></span>${label}`; tick(); }
   function currentPlayheadSec(){
@@ -1037,7 +1039,7 @@
   function showSaved(name){
     const res=$("exportResult"); res.innerHTML=""; if(exportedTimer)clearTimeout(exportedTimer);
     const ok=document.createElement("div");
-    ok.style.cssText="color:var(--teal);font-family:var(--mono);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--teal-soft);border-radius:var(--radius);padding:7px 11px;background:rgba(70,214,180,0.07)";
+    ok.style.cssText="color:var(--teal-text);font-family:var(--mono);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--teal-soft);border-radius:var(--radius);padding:7px 11px;background:rgba(70,214,180,0.07)";
     ok.innerHTML=t("export_done",name);
     res.appendChild(ok);
     exportedTimer=setTimeout(()=>{ res.innerHTML=""; },6000);
@@ -1062,7 +1064,7 @@
     if(embedded){
       const link=document.createElement("a");
       link.href=url; link.download=filename; link.textContent=t("save_link",filename);
-      link.style.cssText="color:var(--amber);font-family:var(--mono);font-size:12px;text-decoration:none;border:1px solid var(--amber);border-radius:var(--radius);padding:7px 11px;display:inline-block";
+      link.style.cssText="color:var(--amber-text);font-family:var(--mono);font-size:12px;text-decoration:none;border:1px solid var(--amber);border-radius:var(--radius);padding:7px 11px;display:inline-block";
       res.appendChild(link);
       const hint=document.createElement("div");
       hint.className="note"; hint.style.marginTop="9px"; hint.innerHTML=t("dl_hint");
