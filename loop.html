@@ -65,7 +65,7 @@
   #work{display:block;position:relative}
   #drop{display:none}
   #work.nofile #drop{display:block}
-  #work.nofile #overview,#work.nofile #wavecanvas,#work.nofile .zoombar,#work.nofile .ruler{display:none}
+  #work.nofile #overview,#work.nofile #wavecanvas,#work.nofile .loopbar,#work.nofile .zoombar,#work.nofile .ruler{display:none}
   #work.nofile .filebar{display:none}
   #work.nofile .panel{opacity:.34;pointer-events:none;filter:saturate(.45)}
   .dropover{position:absolute;inset:-6px;z-index:60;display:none;align-items:center;justify-content:center;background:var(--over-bg);border:2px dashed var(--amber);border-radius:var(--radius);pointer-events:none;backdrop-filter:blur(1px)}
@@ -110,12 +110,14 @@
   .panel{padding:16px}
   .panel h3{font-family:var(--mono);margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
 
-  .field{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;row-gap:8px}
-  .field label{font-family:var(--mono);font-size:12px;color:var(--muted);width:54px;flex-shrink:0}
-  .field .val{font-family:var(--mono);font-size:14px;min-width:78px}
-  .field .val .u{color:var(--muted-2);font-size:11px}
-  .nudge{display:flex;gap:4px;margin-left:auto;align-items:center}
-  .nudge .unit{font-family:var(--mono);font-size:10px;color:var(--muted-2);margin-right:2px;letter-spacing:.05em}
+  .loopbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 22px;padding:9px 12px;border-top:1px solid var(--line-soft);font-family:var(--mono);font-size:12px}
+  .loopbar .item{display:flex;align-items:center;gap:8px}
+  .loopbar .lbl{color:var(--muted)}
+  .loopbar .val{font-size:14px;min-width:78px}
+  .loopbar .val .u{color:var(--muted-2);font-size:11px}
+  .loopbar label.chk{display:flex;align-items:center;gap:6px;color:var(--text);cursor:pointer}
+  #lenSub{margin:0;padding:0 12px 9px}
+  #lenSub:empty{display:none}
 
   input[type=number],input[type=text]{font-family:var(--mono);font-size:13px;background:var(--input-bg);color:var(--text);border:1px solid var(--line);border-radius:var(--radius);padding:7px 9px;width:90px}
   input[type=number]:focus,input[type=text]:focus{outline:none;border-color:var(--amber)}
@@ -190,6 +192,18 @@
       <canvas id="overview"></canvas>
       <canvas id="wavecanvas"></canvas>
 
+      <div class="loopbar">
+        <span class="item"><span class="lbl" data-i18n="lbl_start">Start</span><span class="val" id="startVal">0.000<span class="u"> s</span></span></span>
+        <span class="item"><span class="lbl" data-i18n="lbl_end">End</span><span class="val" id="endVal">0.000<span class="u"> s</span></span></span>
+        <span class="item"><span class="lbl" data-i18n="lbl_length">Length</span><span class="val" id="lenVal" style="color:var(--teal-text)">0.000<span class="u"> s</span></span></span>
+        <span class="item">
+          <span class="lbl" data-i18n="lbl_target">Target</span>
+          <input type="text" id="lenTarget" inputmode="decimal" placeholder="m:ss" style="width:96px" />
+          <label class="chk"><input type="checkbox" id="lenLock" style="accent-color:var(--amber)"> <span data-i18n="len_lock">Lock length</span></label>
+        </span>
+      </div>
+      <div class="sub" id="lenSub"></div>
+
       <div class="zoombar">
         <span class="btngroup touch-only">
           <button class="tiny" id="zoomOut" data-i18n="zoom_out">Zoom out</button>
@@ -237,43 +251,7 @@
         </div>
         <div class="sub" id="normResult" style="margin-top:8px"></div>
 
-        <h3 style="margin-top:22px">Loop region</h3>
-        <div class="field">
-          <label data-i18n="lbl_start">Start</label>
-          <span class="val" id="startVal">0.000<span class="u"> s</span></span>
-          <button class="tiny" id="setStartPh" data-i18n="set_start_ph">Mark start (I/A)</button>
-          <div class="nudge">
-            <span class="unit">ms</span>
-            <button class="tiny" data-edge="start" data-d="-0.1">−100</button>
-            <button class="tiny" data-edge="start" data-d="-0.01">−10</button>
-            <button class="tiny" data-edge="start" data-d="0.01">+10</button>
-            <button class="tiny" data-edge="start" data-d="0.1">+100</button>
-          </div>
-        </div>
-        <div class="field">
-          <label data-i18n="lbl_end">End</label>
-          <span class="val" id="endVal">0.000<span class="u"> s</span></span>
-          <button class="tiny" id="setEndPh" data-i18n="set_end_ph">Mark end (O/S)</button>
-          <div class="nudge">
-            <span class="unit">ms</span>
-            <button class="tiny" data-edge="end" data-d="-0.1">−100</button>
-            <button class="tiny" data-edge="end" data-d="-0.01">−10</button>
-            <button class="tiny" data-edge="end" data-d="0.01">+10</button>
-            <button class="tiny" data-edge="end" data-d="0.1">+100</button>
-          </div>
-        </div>
-        <div class="field">
-          <label data-i18n="lbl_length">Length</label>
-          <span class="val" id="lenVal" style="color:var(--teal-text)">0.000<span class="u"> s</span></span>
-        </div>
-        <div class="field">
-          <label data-i18n="lbl_target">Target</label>
-          <input type="text" id="lenTarget" inputmode="decimal" placeholder="m:ss" style="width:96px" />
-          <label style="width:auto;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px">
-            <input type="checkbox" id="lenLock" style="accent-color:var(--amber)"> <span data-i18n="len_lock">Lock length</span>
-          </label>
-        </div>
-        <div class="sub" id="lenSub"></div>
+        <h3 style="margin-top:22px" data-i18n="h_shortcuts">Shortcuts</h3>
         <div class="note" data-i18n-html="note_region">Drag the teal edges right on the waveform to set the loop; zoom in first for sample-level precision. The −/+ buttons nudge each edge in milliseconds and take effect live while a loop is playing. <b style="color:var(--text)">Spacebar</b> starts/stops the loop; <b style="color:var(--text)">T</b>/<b style="color:var(--text)">R</b> zoom in/out.</div>
 
       </div>
@@ -342,7 +320,7 @@
       drop_replace:"Drop a new file to replace",
       zoom_out:"Zoom out", zoom_in:"Zoom in", mark_in:"Mark IN", mark_out:"Mark OUT", fit_all:"Fit whole file", zoom_loop:"Zoom to loop",
       play_sel:"▶ Play selection", loop_sel:"↻ Loop selection", stop:"■ Stop",
-      h_loop_region:"Loop region", lbl_start:"Start", lbl_end:"End", lbl_length:"Length",
+      lbl_start:"Start", lbl_end:"End", lbl_length:"Length",
       lbl_target:"Target", len_lock:"Lock length",
       len_fixed:len=>`Window locked to ${len}. Drag it along the file; the crossfade borrows audio after the window end, so the length stays exact.`,
       len_xf_limited:ms=>`Only ${ms} ms of audio after the window: crossfade shortened. Move the window earlier for the full crossfade.`,
@@ -350,7 +328,7 @@
       len_tiled:(loop,n,len)=>`Longer than the file: the marked loop (${loop}) is repeated ×${n} on export to fill ${len}, joined by the same crossfade seam.`,
       export_fail:"Export failed: the loop is probably too long for the memory available.",
       export_wav_limit:hours=>`Too long for a WAV file (4 GB limit). The longest possible with this file's format is ${hours} hours.`,
-      set_start_ph:"Mark start (I/A)", set_end_ph:"Mark end (O/S)",
+      h_shortcuts:"Shortcuts",
       note_region:'<b style="color:var(--text)">I</b>/<b style="color:var(--text)">O</b> or <b style="color:var(--text)">A</b>/<b style="color:var(--text)">S</b>: Snap the loop start/end to the playhead <br><b style="color:var(--text)">Spacebar</b>: Starts/stops the loop <br><b style="color:var(--text)">Return</b>: Jumps back to the loop start <br><b style="color:var(--text)">T</b>/<b style="color:var(--text)">R</b> or <b style="color:var(--text)">+</b>/<b style="color:var(--text)">-</b>: Zoom in/out',
       h_crossfade:"Crossfade", crossfade_hint:"smooths the seam",
       xfmode_overlap:"Crossfade: shorten loop", xfmode_preserve:"Crossfade: keep length",
@@ -398,7 +376,7 @@
       drop_replace:"Pudota uusi tiedosto korvataksesi",
       zoom_out:"Loitonna", zoom_in:"Lähennä", mark_in:"Merkkaa alku", mark_out:"Merkkaa loppu", fit_all:"Näytä koko tiedosto", zoom_loop:"Zoomaa luuppiin",
       play_sel:"▶ Toista valinta", loop_sel:"↻ Luuppaa valinta", stop:"■ Pysäytä",
-      h_loop_region:"Luuppialue", lbl_start:"Alku", lbl_end:"Loppu", lbl_length:"Pituus",
+      lbl_start:"Alku", lbl_end:"Loppu", lbl_length:"Pituus",
       lbl_target:"Tavoite", len_lock:"Lukitse pituus",
       len_fixed:len=>`Ikkuna lukittu pituuteen ${len}. Vedä sitä tiedostossa; ristihäivytys lainaa ääntä ikkunan lopun jälkeen, joten pituus pysyy tarkkana.`,
       len_xf_limited:ms=>`Ikkunan lopun jälkeen on vain ${ms} ms ääntä: ristihäivytys lyhenee. Siirrä ikkunaa aiemmaksi täyttä ristihäivytystä varten.`,
@@ -406,7 +384,7 @@
       len_tiled:(loop,n,len)=>`Pidempi kuin tiedosto: merkattua luuppia (${loop}) toistetaan viennissä ×${n}, jotta ${len} täyttyy; saumoissa käytetään samaa ristihäivytystä.`,
       export_fail:"Vienti epäonnistui: luuppi on todennäköisesti liian pitkä käytettävissä olevalle muistille.",
       export_wav_limit:hours=>`Liian pitkä WAV-tiedostoksi (4 Gt:n raja). Pisin mahdollinen tämän tiedoston formaatilla on ${hours} tuntia.`,
-      set_start_ph:"Merkkaa alku (I/A)", set_end_ph:"Merkkaa loppu (O/S)",
+      h_shortcuts:"Pikanäppäimet",
       note_region:'<b style="color:var(--text)">I</b>/<b style="color:var(--text)">O</b> tai <b style="color:var(--text)">A</b>/<b style="color:var(--text)">S</b>: Asettaa luupin alun/lopun <br><b style="color:var(--text)">Välilyönti</b>: Käynnistää/pysäyttää luupin <br><b style="color:var(--text)">Return</b>: Palaa luupin alkuun <br><b style="color:var(--text)">T</b>/<b style="color:var(--text)">R</b> tai <b style="color:var(--text)">+</b>/<b style="color:var(--text)">-</b>: Lähentää/loitontaa',
       h_crossfade:"Ristihäivytys", crossfade_hint:"tasoittaa sauman",
       xfmode_overlap:"Ristihäivytys: lyhentää luuppia", xfmode_preserve:"Ristihäivytys: säilyttää pituuden",
@@ -855,17 +833,9 @@
     lenSubEl.innerHTML=html;
   }
 
-  // ---- nudges / set ----
-  document.querySelectorAll("[data-edge]").forEach(b=>b.addEventListener("click",()=>{
-    const d=parseFloat(b.dataset.d);
-    if(b.dataset.edge==="start") setStart(startSec+d);
-    else setEnd(endSec+d);
-    refreshAll(); restartLoopIfPlaying(b.dataset.edge==="start"&&!windowLocked());
-  }));
+  // ---- set start / end from the playhead ----
   function setStartToPh(){ setStart(playMode?currentPlayheadSec():scrubSec); refreshAll(); restartLoopIfPlaying(!windowLocked()); }
   function setEndToPh(){ setEnd(playMode?currentPlayheadSec():scrubSec); refreshAll(); restartLoopIfPlaying(); }
-  $("setStartPh").addEventListener("click",setStartToPh);
-  $("setEndPh").addEventListener("click",setEndToPh);
   $("markIn").addEventListener("click",setStartToPh);
   $("markOut").addEventListener("click",setEndToPh);
 
