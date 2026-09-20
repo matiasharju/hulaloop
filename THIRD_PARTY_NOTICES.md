@@ -20,7 +20,3 @@ Used for the "Hula Loop" wordmark in the page header.
 - **Component:** Pacifico Regular, version 3.001. A small subset of the font is embedded in the stylesheet of `loop.html` as a base64 WOFF2 file. The subset remains under the same licence as the font.
 - **Copyright:** Copyright 2018 The Pacifico Project Authors (<https://github.com/googlefonts/Pacifico>).
 - **Licence:** SIL Open Font License, Version 1.1. Full text: [licenses/OFL.txt](licenses/OFL.txt). No Reserved Font Name is declared.
-
-## Desktop build
-
-The Windows desktop build of Hula Loop is not part of this repository. It bundles Electron and Chromium, which ship with their own licence files.
