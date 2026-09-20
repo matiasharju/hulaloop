@@ -107,6 +107,8 @@ THIRD_PARTY_NOTICES.md.
   .zoombar{display:flex;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
   .zoombar .view{font-family:var(--mono);font-size:11px;color:var(--muted-2);margin-left:auto}
   .btngroup{gap:8px}
+  .nudgegroup{display:inline-flex;align-items:center;gap:4px}
+  .nudgegroup .nl{font-family:var(--mono);font-size:10px;color:var(--muted-2);margin-right:2px;letter-spacing:.05em;min-width:58px}
   .touch-only{display:none}
   html.touch .touch-only{display:inline-flex}
   html.touch .zoombar button{padding:9px 12px;font-size:12px}
@@ -244,6 +246,20 @@ THIRD_PARTY_NOTICES.md.
         </span>
         <button class="tiny" id="fitBtn" data-i18n="fit_all">Fit all</button>
         <button class="tiny loop" id="zoomLoop" data-i18n="zoom_loop">Zoom to loop</button>
+        <span class="nudgegroup">
+          <span class="nl" data-i18n="lbl_in_ms">IN (ms)</span>
+          <button class="tiny" data-edge="start" data-d="-0.1">−100</button>
+          <button class="tiny" data-edge="start" data-d="-0.01">−10</button>
+          <button class="tiny" data-edge="start" data-d="0.01">+10</button>
+          <button class="tiny" data-edge="start" data-d="0.1">+100</button>
+        </span>
+        <span class="nudgegroup">
+          <span class="nl" data-i18n="lbl_out_ms">OUT (ms)</span>
+          <button class="tiny" data-edge="end" data-d="-0.1">−100</button>
+          <button class="tiny" data-edge="end" data-d="-0.01">−10</button>
+          <button class="tiny" data-edge="end" data-d="0.01">+10</button>
+          <button class="tiny" data-edge="end" data-d="0.1">+100</button>
+        </span>
         <span class="view" id="viewLabel"></span>
       </div>
       <div class="ruler" id="ruler"></div>
@@ -673,7 +689,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
       load_another:"Load another file",
       theme_toggle:"Light / dark theme",
       drop_replace:"Drop a new file to replace",
-      zoom_out:"Zoom out", zoom_in:"Zoom in", mark_in:"Mark IN", mark_out:"Mark OUT", fit_all:"Fit whole file", zoom_loop:"Zoom to loop",
+      zoom_out:"Zoom out", zoom_in:"Zoom in", mark_in:"Mark IN", mark_out:"Mark OUT", lbl_in_ms:"IN (ms)", lbl_out_ms:"OUT (ms)", fit_all:"Fit whole file", zoom_loop:"Zoom to loop",
       play_sel:"▶ Play selection", loop_sel:"↻ Loop selection", stop:"■ Stop",
       lbl_start:"Start", lbl_end:"End", lbl_length:"Length",
       lbl_target:"Target", len_lock:"Lock length",
@@ -736,7 +752,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
       load_another:"Lataa uusi tiedosto",
       theme_toggle:"Vaalea / tumma teema",
       drop_replace:"Pudota uusi tiedosto korvataksesi",
-      zoom_out:"Loitonna", zoom_in:"Lähennä", mark_in:"Merkkaa alku", mark_out:"Merkkaa loppu", fit_all:"Näytä koko tiedosto", zoom_loop:"Zoomaa luuppiin",
+      zoom_out:"Loitonna", zoom_in:"Lähennä", mark_in:"Merkkaa alku", mark_out:"Merkkaa loppu", lbl_in_ms:"ALKU (ms)", lbl_out_ms:"LOPPU (ms)", fit_all:"Näytä koko tiedosto", zoom_loop:"Zoomaa luuppiin",
       play_sel:"▶ Toista valinta", loop_sel:"↻ Luuppaa valinta", stop:"■ Pysäytä",
       lbl_start:"Alku", lbl_end:"Loppu", lbl_length:"Pituus",
       lbl_target:"Tavoite", len_lock:"Lukitse pituus",
@@ -1207,6 +1223,12 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
   function setEndToPh(){ setEnd(playMode?currentPlayheadSec():scrubSec); refreshAll(); restartLoopIfPlaying(); }
   $("markIn").addEventListener("click",setStartToPh);
   $("markOut").addEventListener("click",setEndToPh);
+  document.querySelectorAll("[data-edge]").forEach(b=>b.addEventListener("click",()=>{
+    const d=parseFloat(b.dataset.d);
+    if(b.dataset.edge==="start") setStart(startSec+d);
+    else setEnd(endSec+d);
+    refreshAll(); restartLoopIfPlaying(b.dataset.edge==="start"&&!windowLocked());
+  }));
 
   // ---- crossfade ----
   function setXfade(v){ v=Math.max(0,Math.min(2000,Math.round(v||0))); xfadeMs=v; xfadeEl.value=v; xfadeNum.value=v; updateExportNote(); restartLoopIfPlaying(); }
