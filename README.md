@@ -18,4 +18,4 @@ Hula Loop is a browser-based tool for making seamless loops from audio and music
 MP3, WAV, M4A, AAC, OGG and FLAC, plus the audio track of MP4 and MOV files. What can be decoded depends on your browser.
 
 ## License
-MIT, see [LICENSE](LICENSE). MP3 encoding uses LAME (via lamejs); third-party licences are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+GPL-3.0-or-later, see [LICENSE](LICENSE). MP3 encoding uses LAME (via lamejs); third-party licences are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
