@@ -184,6 +184,7 @@ THIRD_PARTY_NOTICES.md.
   .err{color:var(--red);font-size:12.5px;margin-top:10px;font-family:var(--mono)}
   footer{margin-top:30px;text-align:center;color:var(--muted-2);font-size:11.5px;font-family:var(--mono);line-height:1.7}
   footer a{color:inherit}
+  footer .nb{white-space:nowrap}
   .hidden{display:none!important}
 </style>
 </head>
@@ -347,8 +348,8 @@ THIRD_PARTY_NOTICES.md.
   </div>
 
   <footer>
-    <div data-i18n="footer">Hula Loop · Copyright 2026 Matias Harju</div>
-    <div data-i18n-html="credit_lame">MP3 encoding by <a href="https://lame.sourceforge.net/" target="_blank" rel="noopener">LAME</a> (lamejs, LGPL-3.0)</div>
+    <div><span data-i18n="footer">Hula Loop · Copyright 2026 Matias Harju</span> · v1.0.0</div>
+    <div data-i18n-html="credit_lame">MP3 encoding by <a href="https://lame.sourceforge.net/" target="_blank" rel="noopener">LAME</a> (lamejs, LGPL-3.0) <span class="nb">· <a href="https://github.com/matiasharju/hulaloop/blob/master/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener">Licences</a></span></div>
   </footer>
 </div>
 
@@ -712,7 +713,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
       stopmode_keep:"On stop: keep position", stopmode_return:"On stop: return to start",
       stopmode_title:"Stop behaviour — Pro Tools: ‘Insertion Follows Playback’ (on) · Cubase/Logic: ‘Return to Start Position on Stop’",
       footer:"Hula Loop · Copyright 2026 Matias Harju",
-      credit_lame:'MP3 encoding by <a href="https://lame.sourceforge.net/" target="_blank" rel="noopener">LAME</a> (lamejs, LGPL-3.0)',
+      credit_lame:'MP3 encoding by <a href="https://lame.sourceforge.net/" target="_blank" rel="noopener">LAME</a> (lamejs, LGPL-3.0) <span class="nb">· <a href="https://github.com/matiasharju/hulaloop/blob/master/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener">Licences</a></span>',
       mono:"mono", stereo:"stereo", multichannel:n=>`${n} channels`,
       decode_err:"Couldn't decode that file. If it's an .mp4/.m4a phone recording, try Chrome or Safari (Firefox can't always decode AAC).",
       status_playing:"playing selection",
@@ -774,7 +775,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
       stopmode_keep:"Pysäytys: jää kohtaan", stopmode_return:"Pysäytys: palaa alkuun",
       stopmode_title:"Pysäytyksen toiminta — Pro Tools: ”Insertion Follows Playback” (päällä) · Cubase/Logic: ”Return to Start Position on Stop”",
       footer:"Hula Loop · Copyright 2026 Matias Harju",
-      credit_lame:'MP3-koodaus: <a href="https://lame.sourceforge.net/" target="_blank" rel="noopener">LAME</a> (lamejs, LGPL-3.0)',
+      credit_lame:'MP3-koodaus: <a href="https://lame.sourceforge.net/" target="_blank" rel="noopener">LAME</a> (lamejs, LGPL-3.0) <span class="nb">· <a href="https://github.com/matiasharju/hulaloop/blob/master/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener">Lisenssit</a></span>',
       mono:"mono", stereo:"stereo", multichannel:n=>`${n} kanavaa`,
       decode_err:"Tiedoston purku epäonnistui. Jos kyseessä on puhelimen .mp4/.m4a-äänitys, kokeile Chromea tai Safaria (Firefox ei aina pura AAC:tä).",
       status_playing:"toistetaan valintaa",
