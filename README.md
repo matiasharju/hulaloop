@@ -4,6 +4,12 @@ Hula Loop is a browser-based tool for making seamless loops from audio and music
 
 **[Try Hula Loop in your browser](https://matiasharju.github.io/hulaloop/loop.html)**
 
+<p>
+  <img src="screenshots/hulaloop_light_screenshot.jpg" alt="Hula Loop, light theme" width="49%">
+  <img src="screenshots/hulaloop_dark_screenshot.jpg" alt="Hula Loop, dark theme" width="49%">
+  <img src="screenshots/hulaloop_embed_tempo_screenshot.jpg" alt="Hula Loop, embedding tempo in the export" width="20%">
+</p>
+
 ## Key features
 - **In and out points** on a zoomable waveform, set by dragging or with keyboard shortcuts
 - **Seam crossfade** of adjustable length, either shortening the loop or keeping its length
