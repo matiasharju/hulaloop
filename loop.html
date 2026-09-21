@@ -357,7 +357,7 @@ THIRD_PARTY_NOTICES.md.
   </div>
 
   <footer>
-    <div><span data-i18n="footer">Hula Loop · Copyright 2026 Matias Harju</span> · v1.0.0</div>
+    <div><span data-i18n="footer">Hula Loop · Copyright 2026 Matias Harju</span> <span id="buildInfo" class="nb"></span></div>
     <div data-i18n-html="legal_notice">Free software under the <a href="https://github.com/matiasharju/hulaloop/blob/master/LICENSE" target="_blank" rel="noopener">GNU GPL v3</a>, with no warranty <span class="nb">· <a href="https://github.com/matiasharju/hulaloop/blob/master/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener">Licences</a></span></div>
     <div data-i18n-html="credit_lame">MP3 encoding by <a href="https://lame.sourceforge.net/" target="_blank" rel="noopener">LAME</a> (lamejs, LGPL-3.0)</div>
   </footer>
@@ -723,6 +723,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
       stopmode_keep:"On stop: keep position", stopmode_return:"On stop: return to start",
       stopmode_title:"Stop behaviour — Pro Tools: ‘Insertion Follows Playback’ (on) · Cubase/Logic: ‘Return to Start Position on Stop’",
       footer:"Hula Loop · Copyright 2026 Matias Harju",
+      updated:"updated",
       legal_notice:'Free software under the <a href="https://github.com/matiasharju/hulaloop/blob/master/LICENSE" target="_blank" rel="noopener">GNU GPL v3</a>, with no warranty <span class="nb">· <a href="https://github.com/matiasharju/hulaloop/blob/master/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener">Licences</a></span>',
       credit_lame:'MP3 encoding by <a href="https://lame.sourceforge.net/" target="_blank" rel="noopener">LAME</a> (lamejs, LGPL-3.0)',
       mono:"mono", stereo:"stereo", multichannel:n=>`${n} channels`,
@@ -786,6 +787,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
       stopmode_keep:"Pysäytys: jää kohtaan", stopmode_return:"Pysäytys: palaa alkuun",
       stopmode_title:"Pysäytyksen toiminta — Pro Tools: ”Insertion Follows Playback” (päällä) · Cubase/Logic: ”Return to Start Position on Stop”",
       footer:"Hula Loop · Copyright 2026 Matias Harju",
+      updated:"päivitetty",
       legal_notice:'Vapaa ohjelmisto (<a href="https://github.com/matiasharju/hulaloop/blob/master/LICENSE" target="_blank" rel="noopener">GNU GPL v3</a>), ei takuuta <span class="nb">· <a href="https://github.com/matiasharju/hulaloop/blob/master/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener">Lisenssit</a></span>',
       credit_lame:'MP3-koodaus: <a href="https://lame.sourceforge.net/" target="_blank" rel="noopener">LAME</a> (lamejs, LGPL-3.0)',
       mono:"mono", stereo:"stereo", multichannel:n=>`${n} kanavaa`,
@@ -821,7 +823,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
   function setLang(l){
     LANG=l;
     document.querySelectorAll("#langsw button").forEach(b=>b.classList.toggle("active",b.dataset.lang===l));
-    applyStatic(); setFmeta(); updateStopModeBtn(); updateXfModeBtn(); updateNormMode(); updateExportBtn(); updateMp3Note(); if(buffer)showNormResult();
+    applyStatic(); setFmeta(); updateStopModeBtn(); updateXfModeBtn(); updateNormMode(); updateExportBtn(); updateMp3Note(); updateBuildInfo(); if(buffer)showNormResult();
     if(buffer){ refreshAll(); } else { updateManual(); updateSnapSub(); updateExportNote(); }
   }
   document.querySelectorAll("#langsw button").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.lang)));
@@ -1443,6 +1445,11 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
 
   $("stopBtn").addEventListener("click",stop);
   const stopModeBtn=$("stopMode");
+  // browsers report the current time when a server sends no Last-Modified date, so a date from the last few seconds is not shown
+  function updateBuildInfo(){
+    const m=document.lastModified.match(/^(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)/), d=m&&new Date(+m[3],+m[1]-1,+m[2],+m[4],+m[5],+m[6]);
+    $("buildInfo").textContent=(d&&Date.now()-d>5000)?`· ${t("updated")} ${d.toISOString().slice(0,10)}`:"";
+  }
   function updateStopModeBtn(){ stopModeBtn.textContent=t(stopKeepsPosition?"stopmode_keep":"stopmode_return"); stopModeBtn.style.color=stopKeepsPosition?"var(--teal-text)":"var(--amber-text)"; }
   stopModeBtn.addEventListener("click",()=>{ stopKeepsPosition=!stopKeepsPosition; updateStopModeBtn(); });
   function afterPlay(label){ $("stopBtn").disabled=false; statusEl.innerHTML=`<span class="playing-dot"></span>${label}`; tick(); }
@@ -1764,6 +1771,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
   updateXfModeBtn();
   updateNormMode();
   updateExportBtn();
+  updateBuildInfo();
   applyTheme(theme);
   function updateTempoVisibility(){ $("tempoDetails").classList.toggle("hidden",!bpmTagged()); updateExportNote(); }
   $("bpmTag").addEventListener("change",updateTempoVisibility);
